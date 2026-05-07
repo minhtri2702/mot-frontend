@@ -24,90 +24,34 @@ const genres = {
 // Mock data for manga by genre
 const getMangaByGenre = (genreId: string) => {
   return [
-    {
-      id: 1,
-      title: "One Piece",
-      cover: "https://ext.same-assets.com/4185522578/4110211349.jpg",
-      rating: 4.8,
-    },
-    {
-      id: 2,
-      title: "Jujutsu Kaisen",
-      cover: "https://ext.same-assets.com/4185522578/2908889711.jpg",
-      rating: 4.7,
-    },
-    {
-      id: 3,
-      title: "Chainsaw Man",
-      cover: "https://ext.same-assets.com/4185522578/3267442566.jpg",
-      rating: 4.9,
-    },
-    {
-      id: 4,
-      title: "Spy x Family",
-      cover: "https://ext.same-assets.com/4185522578/1173669990.jpg",
-      rating: 4.6,
-    },
-    {
-      id: 5,
-      title: "Demon Slayer",
-      cover: "https://ext.same-assets.com/4185522578/2551993677.jpg",
-      rating: 4.9,
-    },
-    {
-      id: 6,
-      title: "My Hero Academia",
-      cover: "https://ext.same-assets.com/4185522578/1481122338.jpg",
-      rating: 4.6,
-    },
-    {
-      id: 7,
-      title: "Tokyo Revengers",
-      cover: "https://ext.same-assets.com/4185522578/3081776352.jpg",
-      rating: 4.5,
-    },
-    {
-      id: 8,
-      title: "Black Clover",
-      cover: "https://ext.same-assets.com/4185522578/3947723584.jpg",
-      rating: 4.4,
-    },
-    {
-      id: 9,
-      title: "One Punch Man",
-      cover: "https://ext.same-assets.com/4185522578/1945673209.jpg",
-      rating: 4.8,
-    },
-    {
-      id: 10,
-      title: "Dragon Ball Super",
-      cover: "https://ext.same-assets.com/4185522578/2184428774.jpg",
-      rating: 4.7,
-    },
-    {
-      id: 11,
-      title: "Naruto",
-      cover: "https://ext.same-assets.com/4185522578/3174823561.jpg",
-      rating: 4.7,
-    },
-    {
-      id: 12,
-      title: "Bleach",
-      cover: "https://ext.same-assets.com/4185522578/3761293864.jpg",
-      rating: 4.6,
-    },
+    { id: "1", stt: 1, title: "One Piece", cover: "https://ext.same-assets.com/4185522578/4110211349.jpg", views: 12500000, followers: 1500000, likes: 4.8 },
+    { id: "2", stt: 2, title: "Jujutsu Kaisen", cover: "https://ext.same-assets.com/4185522578/2908889711.jpg", views: 8900000, followers: 980000, likes: 4.7 },
+    { id: "3", stt: 3, title: "Chainsaw Man", cover: "https://ext.same-assets.com/4185522578/3267442566.jpg", views: 10500000, followers: 1200000, likes: 4.9 },
+    { id: "4", stt: 4, title: "Spy x Family", cover: "https://ext.same-assets.com/4185522578/1173669990.jpg", views: 6800000, followers: 750000, likes: 4.6 },
+    { id: "5", stt: 5, title: "Demon Slayer", cover: "https://ext.same-assets.com/4185522578/2551993677.jpg", views: 15000000, followers: 2000000, likes: 4.9 },
+    { id: "6", stt: 6, title: "My Hero Academia", cover: "https://ext.same-assets.com/4185522578/1481122338.jpg", views: 9200000, followers: 1100000, likes: 4.6 },
+    { id: "7", stt: 7, title: "Tokyo Revengers", cover: "https://ext.same-assets.com/4185522578/3081776352.jpg", views: 7200000, followers: 800000, likes: 4.5 },
+    { id: "8", stt: 8, title: "Black Clover", cover: "https://ext.same-assets.com/4185522578/3947723584.jpg", views: 6800000, followers: 720000, likes: 4.4 },
+    { id: "9", stt: 9, title: "One Punch Man", cover: "https://ext.same-assets.com/4185522578/1945673209.jpg", views: 8500000, followers: 950000, likes: 4.8 },
+    { id: "10", stt: 10, title: "Dragon Ball Super", cover: "https://ext.same-assets.com/4185522578/2184428774.jpg", views: 7500000, followers: 850000, likes: 4.7 },
+    { id: "11", stt: 11, title: "Naruto", cover: "https://ext.same-assets.com/4185522578/3174823561.jpg", views: 20000000, followers: 3000000, likes: 4.7 },
+    { id: "12", stt: 12, title: "Bleach", cover: "https://ext.same-assets.com/4185522578/3761293864.jpg", views: 11000000, followers: 1300000, likes: 4.6 },
   ];
 };
 
 type GenrePageProps = {
-  params: {
+  params: Promise<{
     genreId: string;
-  };
+  }>;
 };
 
-export default function GenrePage({ params }: GenrePageProps) {
-  const genreId = params.genreId;
-  const genre = genres[genreId as keyof typeof genres] || { id: genreId, name: genreId.charAt(0).toUpperCase() + genreId.slice(1), color: "bg-gray-500/10 text-gray-600 border-gray-200 dark:border-gray-800" };
+export default async function GenrePage({ params }: GenrePageProps) {
+  const { genreId } = await params;
+  const genre = genres[genreId as keyof typeof genres] || {
+    id: genreId,
+    name: genreId.charAt(0).toUpperCase() + genreId.slice(1),
+    color: "bg-gray-500/10 text-gray-600 border-gray-200 dark:border-gray-800"
+  };
   const mangaList = getMangaByGenre(genreId);
 
   return (
@@ -137,15 +81,9 @@ export default function GenrePage({ params }: GenrePageProps) {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b pb-4">
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" className="gap-1">
-            Tất cả
-          </Button>
-          <Button variant="outline" size="sm" className="gap-1">
-            Đang tiến hành
-          </Button>
-          <Button variant="outline" size="sm" className="gap-1">
-            Hoàn thành
-          </Button>
+          <Button variant="outline" size="sm" className="gap-1">Tất cả</Button>
+          <Button variant="outline" size="sm" className="gap-1">Đang tiến hành</Button>
+          <Button variant="outline" size="sm" className="gap-1">Hoàn thành</Button>
         </div>
         <div className="flex flex-wrap gap-2">
           <Select defaultValue="latest">
@@ -164,7 +102,7 @@ export default function GenrePage({ params }: GenrePageProps) {
       </div>
 
       {/* Manga Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 mb-8 grid-fade-in">
         {mangaList.map((manga) => (
           <MangaCard key={manga.id} manga={manga} showBadge="rating" />
         ))}

@@ -58,54 +58,134 @@
   }
 }
 
-/* Custom Manga Reader Styles */
-.manga-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1.5rem;
+/* ============================================
+   PERFORMANCE OPTIMIZATIONS
+   ============================================ */
+
+/* GPU acceleration for hover transforms */
+.group:hover .group-hover\:scale-105 {
+  will-change: transform;
 }
 
-@media (max-width: 640px) {
-  .manga-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 1rem;
+/* Smooth scrolling for the whole page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Prevent layout shift from scrollbar */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* ============================================
+   FADE-IN ANIMATIONS (optimized)
+   ============================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.manga-cover {
-  aspect-ratio: 2/3;
-  object-fit: cover;
-  transition: transform 0.3s ease;
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+  /* GPU acceleration */
+  will-change: opacity, transform;
 }
 
-.manga-cover:hover {
-  transform: scale(1.05);
+/* Staggered fade-in for grid items - limited to 12 items */
+.grid-fade-in > * {
+  opacity: 0;
+  animation: fadeIn 0.3s ease-out forwards;
+  will-change: opacity, transform;
 }
 
-.chapter-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 0.5rem;
+.grid-fade-in > *:nth-child(1) { animation-delay: 0ms; }
+.grid-fade-in > *:nth-child(2) { animation-delay: 40ms; }
+.grid-fade-in > *:nth-child(3) { animation-delay: 80ms; }
+.grid-fade-in > *:nth-child(4) { animation-delay: 120ms; }
+.grid-fade-in > *:nth-child(5) { animation-delay: 160ms; }
+.grid-fade-in > *:nth-child(6) { animation-delay: 200ms; }
+.grid-fade-in > *:nth-child(7) { animation-delay: 240ms; }
+.grid-fade-in > *:nth-child(8) { animation-delay: 280ms; }
+.grid-fade-in > *:nth-child(9) { animation-delay: 320ms; }
+.grid-fade-in > *:nth-child(10) { animation-delay: 360ms; }
+.grid-fade-in > *:nth-child(11) { animation-delay: 400ms; }
+.grid-fade-in > *:nth-child(12) { animation-delay: 440ms; }
+
+/* ============================================
+   SKELETON LOADING ANIMATION
+   ============================================ */
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-@media (max-width: 640px) {
-  .chapter-list {
-    grid-template-columns: 1fr;
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ============================================
+   IMAGE OPTIMIZATIONS
+   ============================================ */
+
+/* Prevent FOUC for lazy images */
+img[loading="lazy"] {
+  opacity: 0;
+  transition: opacity 0.2s ease-in;
+}
+
+img[loading="lazy"].loaded,
+img[loading="lazy"][complete] {
+  opacity: 1;
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-}
-
-.reader-container img {
-  max-width: 100%;
-  margin: 0 auto;
-}
-
-.reading-controls {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
-  z-index: 50;
 }

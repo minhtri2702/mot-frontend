@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -23,9 +24,11 @@ export default function LoginPage() {
           onClick={() => signIn("google")}
           className="w-full flex items-center justify-center gap-3 py-2 px-4 bg-white text-foreground border border-border rounded-md hover:bg-gray-100 transition font-medium"
         >
-          <img
+          <Image
             src="https://www.svgrepo.com/show/475656/google-color.svg"
             alt="Google Icon"
+            width={20}
+            height={20}
             className="w-5 h-5"
           />
           Đăng nhập bằng Google

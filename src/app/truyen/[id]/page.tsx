@@ -1,252 +1,214 @@
+"use client";
 import Link from "next/link";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
+import { useParams } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { Heart, Eye, BookOpen, Clock, Star, ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  BookOpen,
-  Clock,
-  Eye,
-  Heart,
-  HeartOff,
-  ChevronRight,
-  Star
-} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import MangaCard from "@/components/manga-card";
+import { MangaDetailSkeleton } from "@/components/manga-card-skeleton";
+import type { MangaCardData } from "@/lib/types";
 
-// Mock data for manga details
-const getMangaById = (id: string) => {
-  return {
-    id: parseInt(id),
-    title: "One Piece",
-    altTitles: ["Vua Hải Tặc", "ワンピース"],
-    cover: "https://ext.same-assets.com/4185522578/4110211349.jpg",
-    description: "Theo sát cuộc phiêu lưu của Luffy và băng Mũ Rơm trên hành trình khám phá kho báu vĩ đại One Piece. Luffy, chàng trai với ước mơ trở thành Vua Hải Tặc, đã vô tình ăn phải trái ác quỷ Gomu Gomu, khiến cơ thể cậu có thể co giãn như cao su nhưng đánh đổi lại là không bao giờ có thể bơi được nữa. Cùng với các đồng đội, Luffy đã cùng nhau vượt qua bao khó khăn, đương đầu với những thế lực hùng mạnh của thế giới hải tặc...",
-    status: "Đang tiến hành",
-    author: "Oda Eiichiro",
-    artist: "Oda Eiichiro",
-    genres: ["Action", "Adventure", "Comedy", "Fantasy", "Shounen", "Super Power"],
-    releaseYear: 1997,
-    rating: 4.9,
-    views: "12.5M",
-    chapters: Array.from({ length: 30 }, (_, i) => ({
-      id: 1000 + i,
-      number: 1112 - i,
-      title: `Chapter ${1112 - i}`,
-      updatedAt: `${i} ngày trước`,
-      views: `${Math.floor(100000 / (i + 1))}`,
-    })),
-  };
+// Mock manga detail data
+const mockMangaDetail = {
+  id: "1",
+  title: "One Piece",
+  cover: "https://ext.same-assets.com/4185522578/4110211349.jpg",
+  description: "One Piece là câu chuyện hải tặc được sáng tác bởi Oda Eiichiro, bắt đầu từ năm 1997. Câu chuyện kể về cuộc phiêu lưu của Monkey D. Luffy và băng hải tặc Mũ Rơm trên hành trình tìm kiếm kho báu One Piece để trở thành Vua Hải Tặc. Với hơn 1000 chương truyện, One Piece đã trở thành một trong những bộ manga nổi tiếng và bán chạy nhất mọi thời đại.",
+  author: "Oda Eiichiro",
+  status: "Đang tiến hành",
+  views: 12500000,
+  likes: 4.8,
+  followers: 1500000,
+  genres: [
+    { id: 1, name: "Action", slug: "action" },
+    { id: 2, name: "Adventure", slug: "adventure" },
+    { id: 3, name: "Comedy", slug: "comedy" },
+    { id: 4, name: "Fantasy", slug: "fantasy" },
+    { id: 8, name: "Shounen", slug: "shounen" },
+  ],
+  chapters: [
+    { id: "ch1", number: 1112, title: "Chương 1112", updatedAt: "2 giờ trước" },
+    { id: "ch2", number: 1111, title: "Chương 1111", updatedAt: "1 tuần trước" },
+    { id: "ch3", number: 1110, title: "Chương 1110", updatedAt: "2 tuần trước" },
+    { id: "ch4", number: 1109, title: "Chương 1109", updatedAt: "3 tuần trước" },
+    { id: "ch5", number: 1108, title: "Chương 1108", updatedAt: "1 tháng trước" },
+    { id: "ch6", number: 1107, title: "Chương 1107", updatedAt: "1 tháng trước" },
+    { id: "ch7", number: 1106, title: "Chương 1106", updatedAt: "1 tháng trước" },
+    { id: "ch8", number: 1105, title: "Chương 1105", updatedAt: "2 tháng trước" },
+    { id: "ch9", number: 1104, title: "Chương 1104", updatedAt: "2 tháng trước" },
+    { id: "ch10", number: 1103, title: "Chương 1103", updatedAt: "2 tháng trước" },
+  ],
 };
 
-// Mock data for related manga
-const relatedManga = [
-  {
-    id: 101,
-    title: "Naruto",
-    cover: "https://ext.same-assets.com/4185522578/3174823561.jpg",
-    rating: 4.7,
-  },
-  {
-    id: 102,
-    title: "Bleach",
-    cover: "https://ext.same-assets.com/4185522578/3761293864.jpg",
-    rating: 4.6,
-  },
-  {
-    id: 103,
-    title: "Dragon Ball Super",
-    cover: "https://ext.same-assets.com/4185522578/2184428774.jpg",
-    rating: 4.8,
-  },
-  {
-    id: 104,
-    title: "Fairy Tail",
-    cover: "https://ext.same-assets.com/4185522578/2635819367.jpg",
-    rating: 4.5,
-  },
+// Mock related manga
+const mockRelatedManga: MangaCardData[] = [
+  { id: "2", stt: 2, title: "Jujutsu Kaisen", cover: "https://ext.same-assets.com/4185522578/2908889711.jpg", views: 8900000, followers: 980000, likes: 4.7 },
+  { id: "3", stt: 3, title: "Chainsaw Man", cover: "https://ext.same-assets.com/4185522578/3267442566.jpg", views: 10500000, followers: 1200000, likes: 4.7 },
+  { id: "4", stt: 4, title: "Spy x Family", cover: "https://ext.same-assets.com/4185522578/1173669990.jpg", views: 6800000, followers: 750000, likes: 4.5 },
+  { id: "5", stt: 5, title: "Demon Slayer", cover: "https://ext.same-assets.com/4185522578/2551993677.jpg", views: 15000000, followers: 2000000, likes: 4.9 },
+  { id: "6", stt: 6, title: "Attack on Titan", cover: "https://ext.same-assets.com/4185522578/2815673297.jpg", views: 18000000, followers: 2500000, likes: 4.9 },
 ];
 
-type MangaDetailPageProps = {
-  params: {
-    id: string;
-  };
-};
+export default function MangaDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
 
-  export default async function MangaDetailPage({ params }: MangaDetailPageProps) {
-    const manga = await getMangaById(params.id);
-    
+  const [manga, setManga] = useState<typeof mockMangaDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showAllChapters, setShowAllChapters] = useState(false);
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setManga(mockMangaDetail);
+      setLoading(false);
+    }
+
+    fetchData();
+  }, [id]);
+
+  if (loading) {
+    return <MangaDetailSkeleton />;
+  }
+
+  if (!manga) {
     return (
-    <div className="container py-8">
-      {/* Manga Info Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="container py-8">
+        <div className="text-center py-20">
+          <p className="text-muted-foreground">Không tìm thấy truyện.</p>
+          <Link href="/" className="text-primary hover:underline mt-4 inline-block">
+            Quay lại trang chủ
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const displayedChapters = showAllChapters ? manga.chapters : manga.chapters.slice(0, 5);
+
+  return (
+    <div className="container py-8 space-y-8">
+      {/* Manga Detail Header */}
+      <div className="flex flex-col md:flex-row gap-8">
         {/* Cover Image */}
-        <div className="md:col-span-1">
-          <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-lg">
+        <div className="w-full md:w-64 flex-shrink-0">
+          <div className="aspect-[3/4] rounded-lg overflow-hidden shadow-lg relative">
             <Image
               src={manga.cover}
               alt={manga.title}
               fill
+              sizes="(max-width: 768px) 100vw, 256px"
               style={{ objectFit: "cover" }}
               priority
-              className="transition-transform hover:scale-105 duration-300"
             />
           </div>
         </div>
 
         {/* Info */}
-        <div className="md:col-span-2 space-y-4">
+        <div className="flex-1 space-y-4">
           <h1 className="text-3xl font-bold">{manga.title}</h1>
 
-          {/* Alt titles */}
-          <div className="text-sm text-muted-foreground">
-            {manga.altTitles.map((title, index) => (
-              <span key={index}>
-                {title}
-                {index < manga.altTitles.length - 1 && " / "}
-              </span>
-            ))}
-          </div>
-
-          {/* Stats */}
-          <div className="flex flex-wrap gap-4 text-sm">
-            <div className="flex items-center">
-              <Eye className="h-4 w-4 mr-1 text-muted-foreground" />
-              <span>{manga.views}</span>
-            </div>
-            <div className="flex items-center">
-              <Star className="h-4 w-4 mr-1 text-yellow-400" />
-              <span>{manga.rating}</span>
-            </div>
-            <div className="flex items-center">
-              <BookOpen className="h-4 w-4 mr-1 text-muted-foreground" />
-              <span>{manga.chapters.length} chapters</span>
-            </div>
-            <Badge variant="outline" className={manga.status === "Đang tiến hành" ? "text-green-600 border-green-600" : "text-blue-600 border-blue-600"}>
-              {manga.status}
-            </Badge>
-          </div>
-
-          {/* Genres */}
           <div className="flex flex-wrap gap-2">
             {manga.genres.map((genre) => (
-              <Link href={`/the-loai/${genre.toLowerCase()}`} key={genre}>
-                <Badge variant="secondary" className="hover:bg-secondary-foreground hover:text-secondary transition-colors">
-                  {genre}
+              <Link key={genre.id} href={`/the-loai/${genre.slug}`}>
+                <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80">
+                  {genre.name}
                 </Badge>
               </Link>
             ))}
           </div>
 
-          {/* Description */}
-          <p className="text-sm text-muted-foreground leading-relaxed">{manga.description}</p>
-
-          {/* Author & Artist */}
-          <div className="space-y-1 text-sm">
-            <div>
-              <span className="font-medium">Tác giả:</span>{" "}
-              <Link href={`/tac-gia/${manga.author}`} className="hover:text-primary">
-                {manga.author}
-              </Link>
+          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              <span className="font-medium text-foreground">{manga.likes}</span>
             </div>
-            <div>
-              <span className="font-medium">Họa sĩ:</span>{" "}
-              <Link href={`/hoa-si/${manga.artist}`} className="hover:text-primary">
-                {manga.artist}
-              </Link>
+            <div className="flex items-center gap-1">
+              <Eye className="h-4 w-4" />
+              <span>{manga.views.toLocaleString()}</span>
             </div>
-            <div>
-              <span className="font-medium">Năm xuất bản:</span> {manga.releaseYear}
+            <div className="flex items-center gap-1">
+              <Heart className="h-4 w-4" />
+              <span>{manga.followers.toLocaleString()}</span>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex flex-wrap gap-2">
-            <Button className="flex gap-2">
-              <BookOpen className="h-4 w-4" />
-              <span>Đọc từ đầu</span>
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-1">
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Tác giả:</span>
+              <span>{manga.author}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Trạng thái:</span>
+              <span className="text-green-500 font-medium">{manga.status}</span>
+            </div>
+          </div>
+
+          <p className="text-muted-foreground leading-relaxed">
+            {manga.description}
+          </p>
+
+          <div className="flex gap-3 pt-2">
+            <Button size="lg" asChild>
+              <Link href={`/truyen/${manga.id}/chuong/${manga.chapters[0].id}`}>
+                Đọc từ đầu
+              </Link>
             </Button>
-            <Button className="flex gap-2" variant="outline">
-              <BookOpen className="h-4 w-4" />
-              <span>Đọc mới nhất</span>
-            </Button>
-            <Button className="flex gap-2" variant="outline">
-              <Heart className="h-4 w-4" />
-              <span>Theo dõi</span>
+            <Button size="lg" variant="outline">
+              <Heart className="mr-2 h-4 w-4" />
+              Theo dõi
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Tabs Section */}
-      <Tabs defaultValue="chapters">
-        <TabsList>
-          <TabsTrigger value="chapters">Danh sách chương</TabsTrigger>
-          <TabsTrigger value="comments">Bình luận</TabsTrigger>
-          <TabsTrigger value="related">Truyện liên quan</TabsTrigger>
-        </TabsList>
-
-        {/* Chapters Tab */}
-        <TabsContent value="chapters" className="mt-4">
-          <Card className="p-4">
-            <div className="mb-4 flex justify-between items-center">
-              <h3 className="font-bold text-lg">Chapters ({manga.chapters.length})</h3>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  Mới nhất
-                </Button>
-                <Button variant="outline" size="sm">
-                  Cũ nhất
-                </Button>
+      {/* Chapter List */}
+      <section>
+        <h2 className="text-xl font-bold mb-4">Danh sách chương</h2>
+        <div className="border rounded-lg divide-y">
+          {displayedChapters.map((chapter) => (
+            <Link
+              key={chapter.id}
+              href={`/truyen/${manga.id}/chuong/${chapter.id}`}
+              className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{chapter.title}</span>
               </div>
-            </div>
+              <span className="text-sm text-muted-foreground">{chapter.updatedAt}</span>
+            </Link>
+          ))}
+        </div>
+        {manga.chapters.length > 5 && (
+          <Button
+            variant="ghost"
+            className="w-full mt-2"
+            onClick={() => setShowAllChapters(!showAllChapters)}
+          >
+            <ChevronDown className={`mr-2 h-4 w-4 transition-transform ${showAllChapters ? "rotate-180" : ""}`} />
+            {showAllChapters ? "Thu gọn" : `Xem tất cả ${manga.chapters.length} chương`}
+          </Button>
+        )}
+      </section>
 
-            <div className="space-y-2">
-              {manga.chapters.map((chapter) => (
-                <div key={chapter.id} className="rounded-md border p-3 hover:bg-muted transition-colors">
-                  <Link href={`/truyen/${manga.id}/chuong/${chapter.number}`} className="flex justify-between items-center">
-                    <div className="flex flex-col md:flex-row md:items-center md:gap-2">
-                      <span className="font-medium">{chapter.title}</span>
-                      <span className="text-xs text-muted-foreground hidden md:inline">- Cập nhật {chapter.updatedAt}</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-xs text-muted-foreground md:hidden">{chapter.updatedAt}</span>
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        <Eye className="h-3 w-3 mr-1" />
-                        <span>{chapter.views}</span>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </TabsContent>
-
-        {/* Comments Tab */}
-        <TabsContent value="comments" className="mt-4">
-          <Card className="p-4">
-            <h3 className="font-bold text-lg mb-4">Bình luận</h3>
-            <div className="p-6 text-center text-muted-foreground">
-              <p>Tính năng bình luận sẽ sớm được ra mắt!</p>
-            </div>
-          </Card>
-        </TabsContent>
-
-        {/* Related Tab */}
-        <TabsContent value="related" className="mt-4">
-          <Card className="p-4">
-            <h3 className="font-bold text-lg mb-4">Truyện cùng thể loại</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {relatedManga.map((manga) => (
-                <MangaCard key={manga.id} manga={manga} showBadge="rating" />
-              ))}
-            </div>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Related Manga */}
+      <section>
+        <h2 className="text-xl font-bold mb-4">Truyện cùng thể loại</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          {mockRelatedManga.map((manga) => (
+            <MangaCard key={manga.id} manga={manga} showBadge="views" />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

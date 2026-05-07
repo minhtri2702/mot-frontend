@@ -6,13 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tag } from "lucide-react";
 
-// Type của dữ liệu từ API
-type GenreFromApi = {
-  genreId: number;
-  genreName: string;
-};
-
-// Type sau khi đã xử lý dữ liệu
 type Genre = {
   id: number;
   name: string;
@@ -43,41 +36,56 @@ const genreColors: Record<string, string> = {
   webtoon: "bg-emerald-500/10 text-emerald-600 border-emerald-200 dark:border-emerald-800",
 };
 
+// Mock genres data
+const mockGenres: Genre[] = [
+  { id: 1, name: "Action", slug: "action", color: genreColors.action, count: 1250 },
+  { id: 2, name: "Adventure", slug: "adventure", color: genreColors.adventure, count: 890 },
+  { id: 3, name: "Comedy", slug: "comedy", color: genreColors.comedy, count: 1100 },
+  { id: 4, name: "Drama", slug: "drama", color: genreColors.drama, count: 760 },
+  { id: 5, name: "Fantasy", slug: "fantasy", color: genreColors.fantasy, count: 980 },
+  { id: 6, name: "Horror", slug: "horror", color: genreColors.horror, count: 450 },
+  { id: 7, name: "Mystery", slug: "mystery", color: genreColors.mystery, count: 320 },
+  { id: 8, name: "Romance", slug: "romance", color: genreColors.romance, count: 870 },
+  { id: 9, name: "School Life", slug: "school-life", color: genreColors["school-life"], count: 540 },
+  { id: 10, name: "Sci-fi", slug: "sci-fi", color: genreColors["sci-fi"], count: 410 },
+  { id: 11, name: "Seinen", slug: "seinen", color: genreColors.seinen, count: 380 },
+  { id: 12, name: "Shoujo", slug: "shoujo", color: genreColors.shoujo, count: 620 },
+  { id: 13, name: "Shounen", slug: "shounen", color: genreColors.shounen, count: 1350 },
+  { id: 14, name: "Slice of Life", slug: "slice-of-life", color: genreColors["slice-of-life"], count: 490 },
+  { id: 15, name: "Sports", slug: "sports", color: genreColors.sports, count: 280 },
+  { id: 16, name: "Supernatural", slug: "supernatural", color: genreColors.supernatural, count: 560 },
+  { id: 17, name: "Tragedy", slug: "tragedy", color: genreColors.tragedy, count: 190 },
+  { id: 18, name: "Webtoon", slug: "webtoon", color: genreColors.webtoon, count: 720 },
+];
+
 export default function GenresPage() {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchGenres() {
-      try {
-        const res = await fetch("http://localhost:8090/api/v1/genres"); // <-- chỉnh endpoint phù hợp backend
-        const data: GenreFromApi[] = await res.json();
-
-        const genresWithColor: Genre[] = data.map((genre) => ({
-          id: genre.genreId,
-          name: capitalizeWords(genre.genreName.replace(/-/g, " ")),
-          slug: genre.genreName,
-          color: genreColors[genre.genreName] || "bg-gray-100 text-gray-800 border-gray-300",
-          count: Math.floor(Math.random() * 1500), // Nếu không có `count` thì random
-        }));
-
-        setGenres(genresWithColor);
-      } catch (error) {
-        console.error("Lỗi khi tải thể loại:", error);
-      } finally {
-        setLoading(false);
-      }
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 200));
+      setGenres(mockGenres);
+      setLoading(false);
     }
-
     fetchGenres();
   }, []);
 
-  function capitalizeWords(str: string): string {
-    return str.replace(/\b\w/g, (char) => char.toUpperCase());
-  }
-
   if (loading) {
-    return <div className="text-center py-10">Đang tải dữ liệu...</div>;
+    return (
+      <div className="container py-8">
+        <div className="mb-8">
+          <div className="h-9 w-48 bg-muted rounded animate-pulse mb-2" />
+          <div className="h-5 w-96 bg-muted rounded animate-pulse" />
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-40 bg-muted rounded-lg animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -99,7 +107,7 @@ export default function GenresPage() {
                     <Tag className="h-6 w-6" />
                   </div>
                   <Badge variant="outline" className="font-normal">
-                    {genre.count} truyện
+                    {genre.count.toLocaleString()} truyện
                   </Badge>
                 </div>
                 <h2 className="text-xl font-semibold mb-1">{genre.name}</h2>
