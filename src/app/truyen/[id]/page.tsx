@@ -2,72 +2,51 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
-import { Heart, Eye, BookOpen, Clock, Star, ChevronDown, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Heart, Eye, BookOpen, Clock, Star, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import MangaCard from "@/components/manga-card";
 import { MangaDetailSkeleton } from "@/components/manga-card-skeleton";
+import { getMangaDetail, getRelatedManga, formatNumber, formatRelativeTime, getCoverImageUrl } from "@/lib/api";
+import type { MangaDetailDTO, MangaSummaryDTO } from "@/lib/api";
 import type { MangaCardData } from "@/lib/types";
-
-// Mock manga detail data
-const mockMangaDetail = {
-  id: "1",
-  title: "One Piece",
-  cover: "https://ext.same-assets.com/4185522578/4110211349.jpg",
-  description: "One Piece là câu chuyện hải tặc được sáng tác bởi Oda Eiichiro, bắt đầu từ năm 1997. Câu chuyện kể về cuộc phiêu lưu của Monkey D. Luffy và băng hải tặc Mũ Rơm trên hành trình tìm kiếm kho báu One Piece để trở thành Vua Hải Tặc. Với hơn 1000 chương truyện, One Piece đã trở thành một trong những bộ manga nổi tiếng và bán chạy nhất mọi thời đại.",
-  author: "Oda Eiichiro",
-  status: "Đang tiến hành",
-  views: 12500000,
-  likes: 4.8,
-  followers: 1500000,
-  genres: [
-    { id: 1, name: "Action", slug: "action" },
-    { id: 2, name: "Adventure", slug: "adventure" },
-    { id: 3, name: "Comedy", slug: "comedy" },
-    { id: 4, name: "Fantasy", slug: "fantasy" },
-    { id: 8, name: "Shounen", slug: "shounen" },
-  ],
-  chapters: [
-    { id: "ch1", number: 1112, title: "Chương 1112", updatedAt: "2 giờ trước" },
-    { id: "ch2", number: 1111, title: "Chương 1111", updatedAt: "1 tuần trước" },
-    { id: "ch3", number: 1110, title: "Chương 1110", updatedAt: "2 tuần trước" },
-    { id: "ch4", number: 1109, title: "Chương 1109", updatedAt: "3 tuần trước" },
-    { id: "ch5", number: 1108, title: "Chương 1108", updatedAt: "1 tháng trước" },
-    { id: "ch6", number: 1107, title: "Chương 1107", updatedAt: "1 tháng trước" },
-    { id: "ch7", number: 1106, title: "Chương 1106", updatedAt: "1 tháng trước" },
-    { id: "ch8", number: 1105, title: "Chương 1105", updatedAt: "2 tháng trước" },
-    { id: "ch9", number: 1104, title: "Chương 1104", updatedAt: "2 tháng trước" },
-    { id: "ch10", number: 1103, title: "Chương 1103", updatedAt: "2 tháng trước" },
-  ],
-};
-
-// Mock related manga
-const mockRelatedManga: MangaCardData[] = [
-  { id: "2", stt: 2, title: "Jujutsu Kaisen", cover: "https://ext.same-assets.com/4185522578/2908889711.jpg", views: 8900000, followers: 980000, likes: 4.7 },
-  { id: "3", stt: 3, title: "Chainsaw Man", cover: "https://ext.same-assets.com/4185522578/3267442566.jpg", views: 10500000, followers: 1200000, likes: 4.7 },
-  { id: "4", stt: 4, title: "Spy x Family", cover: "https://ext.same-assets.com/4185522578/1173669990.jpg", views: 6800000, followers: 750000, likes: 4.5 },
-  { id: "5", stt: 5, title: "Demon Slayer", cover: "https://ext.same-assets.com/4185522578/2551993677.jpg", views: 15000000, followers: 2000000, likes: 4.9 },
-  { id: "6", stt: 6, title: "Attack on Titan", cover: "https://ext.same-assets.com/4185522578/2815673297.jpg", views: 18000000, followers: 2500000, likes: 4.9 },
-];
 
 export default function MangaDetailPage() {
   const params = useParams();
   const id = params.id as string;
 
-  const [manga, setManga] = useState<typeof mockMangaDetail | null>(null);
+  const [manga, setManga] = useState<MangaDetailDTO | null>(null);
+  const [relatedManga, setRelatedManga] = useState<MangaCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAllChapters, setShowAllChapters] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setManga(mockMangaDetail);
-      setLoading(false);
+      try {
+        const [detail, related] = await Promise.all([
+          getMangaDetail(id),
+          getRelatedManga(id, 0, 12),
+        ]);
+        setManga(detail);
+        setRelatedManga(
+          related.content.map((m: MangaSummaryDTO) => ({
+            id: m.id,
+            stt: m.stt,
+            title: m.title,
+            cover: m.coverImagePath,
+            views: m.views,
+            followers: m.followers,
+            likes: m.likes,
+            status: m.status,
+          }))
+        );
+      } catch (error) {
+        console.error("Failed to load manga detail:", error);
+      } finally {
+        setLoading(false);
+      }
     }
 
     fetchData();
@@ -100,7 +79,7 @@ export default function MangaDetailPage() {
         <div className="w-full md:w-64 flex-shrink-0">
           <div className="aspect-[3/4] rounded-lg overflow-hidden shadow-lg relative">
             <Image
-              src={manga.cover}
+              src={getCoverImageUrl(manga.coverImagePath)}
               alt={manga.title}
               fill
               sizes="(max-width: 768px) 100vw, 256px"
@@ -116,9 +95,9 @@ export default function MangaDetailPage() {
 
           <div className="flex flex-wrap gap-2">
             {manga.genres.map((genre) => (
-              <Link key={genre.id} href={`/the-loai/${genre.slug}`}>
+              <Link key={genre} href={`/the-loai/${genre.toLowerCase()}`}>
                 <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80">
-                  {genre.name}
+                  {genre}
                 </Badge>
               </Link>
             ))}
@@ -131,11 +110,11 @@ export default function MangaDetailPage() {
             </div>
             <div className="flex items-center gap-1">
               <Eye className="h-4 w-4" />
-              <span>{manga.views.toLocaleString()}</span>
+              <span>{formatNumber(manga.views)}</span>
             </div>
             <div className="flex items-center gap-1">
               <Heart className="h-4 w-4" />
-              <span>{manga.followers.toLocaleString()}</span>
+              <span>{formatNumber(manga.followers)}</span>
             </div>
           </div>
 
@@ -148,20 +127,33 @@ export default function MangaDetailPage() {
             <div className="flex items-center gap-1">
               <Clock className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">Trạng thái:</span>
-              <span className="text-green-500 font-medium">{manga.status}</span>
+              <span className={`font-medium ${
+                manga.status === "Đang tiến hành" ? "text-green-500" :
+                manga.status === "Hoàn thành" ? "text-blue-500" : ""
+              }`}>
+                {manga.status}
+              </span>
             </div>
           </div>
+
+          {manga.alternativeTitles && (
+            <p className="text-sm text-muted-foreground">
+              Tên khác: {manga.alternativeTitles}
+            </p>
+          )}
 
           <p className="text-muted-foreground leading-relaxed">
             {manga.description}
           </p>
 
           <div className="flex gap-3 pt-2">
-            <Button size="lg" asChild>
-              <Link href={`/truyen/${manga.id}/chuong/${manga.chapters[0].id}`}>
-                Đọc từ đầu
-              </Link>
-            </Button>
+            {manga.chapters.length > 0 && (
+              <Button size="lg" asChild>
+                <Link href={`/truyen/${manga.id}/chuong/${manga.chapters[0].id}`}>
+                  Đọc từ đầu
+                </Link>
+              </Button>
+            )}
             <Button size="lg" variant="outline">
               <Heart className="mr-2 h-4 w-4" />
               Theo dõi
@@ -173,42 +165,56 @@ export default function MangaDetailPage() {
       {/* Chapter List */}
       <section>
         <h2 className="text-xl font-bold mb-4">Danh sách chương</h2>
-        <div className="border rounded-lg divide-y">
-          {displayedChapters.map((chapter) => (
-            <Link
-              key={chapter.id}
-              href={`/truyen/${manga.id}/chuong/${chapter.id}`}
-              className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <BookOpen className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">{chapter.title}</span>
-              </div>
-              <span className="text-sm text-muted-foreground">{chapter.updatedAt}</span>
-            </Link>
-          ))}
-        </div>
-        {manga.chapters.length > 5 && (
-          <Button
-            variant="ghost"
-            className="w-full mt-2"
-            onClick={() => setShowAllChapters(!showAllChapters)}
-          >
-            <ChevronDown className={`mr-2 h-4 w-4 transition-transform ${showAllChapters ? "rotate-180" : ""}`} />
-            {showAllChapters ? "Thu gọn" : `Xem tất cả ${manga.chapters.length} chương`}
-          </Button>
+        {manga.chapters.length > 0 ? (
+          <>
+            <div className="border rounded-lg divide-y">
+              {displayedChapters.map((chapter) => (
+                <Link
+                  key={chapter.id}
+                  href={`/truyen/${manga.id}/chuong/${chapter.id}`}
+                  className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <BookOpen className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">
+                      {chapter.chapterName || `Chương ${chapter.chapterNumber}`}
+                    </span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {formatRelativeTime(chapter.createdAt)}
+                  </span>
+                </Link>
+              ))}
+            </div>
+            {manga.chapters.length > 5 && (
+              <Button
+                variant="ghost"
+                className="w-full mt-2"
+                onClick={() => setShowAllChapters(!showAllChapters)}
+              >
+                <ChevronDown className={`mr-2 h-4 w-4 transition-transform ${showAllChapters ? "rotate-180" : ""}`} />
+                {showAllChapters ? "Thu gọn" : `Xem tất cả ${manga.chapters.length} chương`}
+              </Button>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            Chưa có chương nào
+          </div>
         )}
       </section>
 
       {/* Related Manga */}
-      <section>
-        <h2 className="text-xl font-bold mb-4">Truyện cùng thể loại</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {mockRelatedManga.map((manga) => (
-            <MangaCard key={manga.id} manga={manga} showBadge="views" />
-          ))}
-        </div>
-      </section>
+      {relatedManga.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold mb-4">Truyện cùng thể loại</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {relatedManga.map((m) => (
+              <MangaCard key={m.id} manga={m} showBadge="views" />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

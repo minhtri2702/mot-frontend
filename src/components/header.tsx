@@ -16,10 +16,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, Search, User, ChevronDown, BookOpen, Clock, Heart, BarChart, Sun, Moon, X } from "lucide-react";
+import { Menu, Search, User, ChevronDown, BookOpen, Clock, Heart, BarChart, Sun, Moon, LogOut, Settings } from "lucide-react";
 import SearchDialog from "@/components/search-dialog";
+import { useAuth } from "@/lib/auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
@@ -50,6 +53,87 @@ function ThemeToggle() {
         <Moon className="h-5 w-5" />
       )}
     </Button>
+  );
+}
+
+function UserMenu() {
+  const { user, isAuthenticated, logout } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="icon" title="Tài khoản">
+        <User className="h-5 w-5" />
+      </Button>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return (
+      <Link href="/login">
+        <Button variant="ghost" size="icon" title="Đăng nhập">
+          <User className="h-5 w-5" />
+        </Button>
+      </Link>
+    );
+  }
+
+  const initials = user.username
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="rounded-full" title={user.username}>
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={user.avatarUrl || undefined} alt={user.username} />
+            <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <div className="flex items-center gap-2 px-2 py-1.5">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={user.avatarUrl || undefined} alt={user.username} />
+            <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium truncate max-w-[150px]">{user.username}</span>
+            <span className="text-xs text-muted-foreground truncate max-w-[150px]">{user.email}</span>
+          </div>
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>
+          <Settings className="h-4 w-4 mr-2" />
+          Cài đặt tài khoản
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Heart className="h-4 w-4 mr-2" />
+          Truyện yêu thích
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Clock className="h-4 w-4 mr-2" />
+          Lịch sử đọc
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
+          <LogOut className="h-4 w-4 mr-2" />
+          Đăng xuất
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -259,11 +343,7 @@ export default function Header() {
             <Button variant="ghost" size="icon" title="Bảng xếp hạng" className="hidden sm:inline-flex">
               <BarChart className="h-5 w-5" />
             </Button>
-            <a href="/login">
-              <Button variant="ghost" size="icon" title="Tài khoản">
-                <User className="h-5 w-5" />
-              </Button>
-            </a>
+            <UserMenu />
           </div>
         </div>
       </div>

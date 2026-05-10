@@ -10,8 +10,31 @@ export function formatNumber(num: number | null | undefined): string {
   return num.toString();
 }
 
+/**
+ * Format ISO date string to relative time (e.g., "2 giờ trước")
+ */
+export function formatRelativeTime(dateStr: string | null | undefined): string {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  if (diffMinutes < 1) return "Vừa xong";
+  if (diffMinutes < 60) return `${diffMinutes} phút trước`;
+  if (diffHours < 24) return `${diffHours} giờ trước`;
+  if (diffDays < 7) return `${diffDays} ngày trước`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} tuần trước`;
+  return date.toLocaleDateString("vi-VN");
+}
+
+// ============================================
+// API Configuration
+// ============================================
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 
 // Cache TTLs
 const CACHE_TTL = {
@@ -54,7 +77,10 @@ async function cachedFetch<T>(url: string, options: FetchOptions = {}): Promise<
     throw new Error(`API Error: ${response.status} ${response.statusText}`);
   }
 
-  const data = await response.json();
+  const raw = await response.json();
+
+  // Unwrap BaseResponse: { success, data, message } -> data
+  const data = raw?.success === true ? raw.data : raw;
 
   // Cache the result
   if (!skipCache) {
@@ -66,171 +92,200 @@ async function cachedFetch<T>(url: string, options: FetchOptions = {}): Promise<
 }
 
 // ============================================
+// Types matching Product Services DTOs
+// ============================================
+
+export interface MangaSummaryDTO {
+  id: string;
+  stt: number;
+  title: string;
+  coverImagePath: string;
+  status: string;
+  author: string;
+  views: number;
+  likes: number;
+  followers: number;
+  latestChapter: number;
+  latestChapterUpdatedAt: string | null;
+  genres: string[];
+}
+
+export interface MangaDetailDTO {
+  id: string;
+  stt: number;
+  title: string;
+  coverImagePath: string;
+  status: string;
+  description: string;
+  author: string;
+  alternativeTitles: string;
+  createdDate: string;
+  translationTeam: string;
+  ageRating: string;
+  likes: number;
+  followers: number;
+  views: number;
+  realViews: number;
+  latestChapter: number;
+  latestChapterUpdatedAt: string;
+  genres: string[];
+  chapters: ChapterSummaryDTO[];
+}
+
+export interface ChapterSummaryDTO {
+  id: number;
+  chapterNumber: number;
+  chapterName: string;
+  viewCount: number;
+  createdAt: string;
+}
+
+export interface ChapterDetailDTO {
+  id: number;
+  chapterNumber: number;
+  chapterName: string;
+  viewCount: number;
+  createdAt: string;
+  imageUrls: string[];
+  navigation: ChapterNavigationDTO;
+}
+
+export interface ChapterNavigationDTO {
+  prevChapterId: number | null;
+  prevChapterNumber: number | null;
+  nextChapterId: number | null;
+  nextChapterNumber: number | null;
+}
+
+export interface GenreDTO {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export interface PagedResponseDTO<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+  first: boolean;
+}
+
+// ============================================
 // Manga Listing APIs
 // ============================================
 
-export interface MangaListParams {
-  page?: number;
-  limit?: number;
-  sort?: "latest" | "views" | "likes" | "followers";
-  genre?: string;
-  status?: string;
-  country?: string;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ApiData = any;
-
-export interface MangaListResponse {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  content: any[];
-  totalPages: number;
-  totalElements: number;
-  page: number;
-  limit: number;
-}
-
 /**
- * Get manga listing with pagination
+ * Get featured manga (for carousel)
  */
-export async function getMangaList(params: MangaListParams = {}): Promise<MangaListResponse> {
-  const { page = 1, limit = 24, sort = "latest", genre, status, country } = params;
-
-  const queryParams = new URLSearchParams({
-    page: page.toString(),
-    limit: limit.toString(),
-    sort,
-  });
-
-  if (genre) queryParams.set("genre", genre);
-  if (status) queryParams.set("status", status);
-  if (country) queryParams.set("country", country);
-
-  const url = `${API_BASE_URL}/api/manga?${queryParams.toString()}`;
-
-  return cachedFetch<MangaListResponse>(url, { cacheTtl: CACHE_TTL.LISTING });
+export async function getFeaturedManga(): Promise<MangaSummaryDTO[]> {
+  const url = `${API_BASE_URL}/manga/featured`;
+  return cachedFetch<MangaSummaryDTO[]>(url, { cacheTtl: CACHE_TTL.LISTING });
 }
 
 /**
  * Get latest updated manga
  */
-export async function getLatestUpdates(page: number = 1): Promise<MangaListResponse> {
-  return getMangaList({ page, sort: "latest" });
+export async function getLatestUpdates(page: number = 0, size: number = 20): Promise<PagedResponseDTO<MangaSummaryDTO>> {
+  const url = `${API_BASE_URL}/manga/latest-updated?page=${page}&size=${size}`;
+  return cachedFetch<PagedResponseDTO<MangaSummaryDTO>>(url, { cacheTtl: CACHE_TTL.LISTING });
 }
 
 /**
- * Get trending manga
+ * Get hot/trending manga
  */
-export async function getTrendingManga(page: number = 1): Promise<MangaListResponse> {
-  return getMangaList({ page, sort: "views" });
+export async function getHotManga(page: number = 0, size: number = 20): Promise<PagedResponseDTO<MangaSummaryDTO>> {
+  const url = `${API_BASE_URL}/manga/hot?page=${page}&size=${size}`;
+  return cachedFetch<PagedResponseDTO<MangaSummaryDTO>>(url, { cacheTtl: CACHE_TTL.LISTING });
 }
 
 /**
- * Get featured manga (for carousel)
+ * Get new manga
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getFeaturedManga(): Promise<any[]> {
-  const url = `${API_BASE_URL}/api/manga/featured`;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return cachedFetch<any[]>(url, { cacheTtl: CACHE_TTL.LISTING });
+export async function getNewManga(page: number = 0, size: number = 20): Promise<PagedResponseDTO<MangaSummaryDTO>> {
+  const url = `${API_BASE_URL}/manga/new?page=${page}&size=${size}`;
+  return cachedFetch<PagedResponseDTO<MangaSummaryDTO>>(url, { cacheTtl: CACHE_TTL.LISTING });
+}
+
+/**
+ * Get completed manga
+ */
+export async function getCompletedManga(page: number = 0, size: number = 20): Promise<PagedResponseDTO<MangaSummaryDTO>> {
+  const url = `${API_BASE_URL}/manga/completed?page=${page}&size=${size}`;
+  return cachedFetch<PagedResponseDTO<MangaSummaryDTO>>(url, { cacheTtl: CACHE_TTL.LISTING });
 }
 
 // ============================================
 // Manga Detail APIs
 // ============================================
 
-export interface MangaDetail {
-  id: string;
-  title: string;
-  cover: string;
-  description: string;
-  author: string;
-  status: string;
-  views: number;
-  likes: number;
-  followers: number;
-  genres: { id: number; name: string; slug: string }[];
-  chapters: { id: string; number: number; title: string; updatedAt: string }[];
-}
-
 /**
  * Get manga detail by ID
  */
-export async function getMangaDetail(id: string): Promise<MangaDetail> {
-  const url = `${API_BASE_URL}/api/manga/${id}`;
-  return cachedFetch<MangaDetail>(url, { cacheTtl: CACHE_TTL.DETAIL });
-}
-
-/**
- * Get related manga by genre
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getRelatedManga(mangaId: string, limit: number = 6): Promise<any[]> {
-  const url = `${API_BASE_URL}/api/manga/${mangaId}/related?limit=${limit}`;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return cachedFetch<any[]>(url, { cacheTtl: CACHE_TTL.DETAIL });
+export async function getMangaDetail(id: string): Promise<MangaDetailDTO> {
+  const url = `${API_BASE_URL}/manga/${id}`;
+  return cachedFetch<MangaDetailDTO>(url, { cacheTtl: CACHE_TTL.DETAIL });
 }
 
 // ============================================
 // Chapter APIs
 // ============================================
 
-export interface ChapterDetail {
-  mangaId: string;
-  mangaTitle: string;
-  chapterId: string;
-  chapterNumber: number;
-  chapterTitle: string;
-  images: string[];
-  prevChapterId: string | null;
-  nextChapterId: string | null;
-}
-
 /**
- * Get chapter images and info
+ * Get chapter detail with images
  */
-export async function getChapterDetail(mangaId: string, chapterId: string): Promise<ChapterDetail> {
-  const url = `${API_BASE_URL}/api/manga/${mangaId}/chuong/${chapterId}`;
-  return cachedFetch<ChapterDetail>(url, { cacheTtl: CACHE_TTL.CHAPTER });
+export async function getChapterDetail(mangaId: string, chapterId: number): Promise<ChapterDetailDTO> {
+  const url = `${API_BASE_URL}/manga/${mangaId}/chapters/${chapterId}`;
+  return cachedFetch<ChapterDetailDTO>(url, { cacheTtl: CACHE_TTL.CHAPTER });
 }
 
 // ============================================
 // Search APIs
 // ============================================
 
-export interface SearchResult {
-  id: string;
-  title: string;
-  cover: string;
-  chapter?: number | null;
-}
-
 /**
  * Search manga by title
  */
-export async function searchManga(query: string, limit: number = 8): Promise<SearchResult[]> {
-  if (!query.trim()) return [];
-
-  const url = `${API_BASE_URL}/api/manga/search?q=${encodeURIComponent(query)}&limit=${limit}`;
-  return cachedFetch<SearchResult[]>(url, { cacheTtl: CACHE_TTL.SEARCH });
+export async function searchManga(keyword: string, page: number = 0, size: number = 20): Promise<PagedResponseDTO<MangaSummaryDTO>> {
+  if (!keyword.trim()) {
+    return { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0, last: true, first: true };
+  }
+  const url = `${API_BASE_URL}/manga/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`;
+  return cachedFetch<PagedResponseDTO<MangaSummaryDTO>>(url, { cacheTtl: CACHE_TTL.SEARCH });
 }
 
 // ============================================
 // Genre APIs
 // ============================================
 
-export interface Genre {
-  id: number;
-  name: string;
-  slug: string;
-}
-
 /**
  * Get all genres
  */
-export async function getGenres(): Promise<Genre[]> {
-  const url = `${API_BASE_URL}/api/genres`;
-  return cachedFetch<Genre[]>(url, { cacheTtl: CACHE_TTL.DETAIL });
+export async function getGenres(): Promise<GenreDTO[]> {
+  const url = `${API_BASE_URL}/genres`;
+  return cachedFetch<GenreDTO[]>(url, { cacheTtl: CACHE_TTL.DETAIL });
+}
+
+/**
+ * Get manga by genre
+ */
+export async function getMangaByGenre(genreId: number, page: number = 0, size: number = 20): Promise<PagedResponseDTO<MangaSummaryDTO>> {
+  const url = `${API_BASE_URL}/manga/genre/${genreId}?page=${page}&size=${size}`;
+  return cachedFetch<PagedResponseDTO<MangaSummaryDTO>>(url, { cacheTtl: CACHE_TTL.LISTING });
+}
+
+// ============================================
+// Related Manga API
+// ============================================
+
+/**
+ * Get related manga by genre (for manga detail page)
+ */
+export async function getRelatedManga(id: string, page: number = 0, size: number = 12): Promise<PagedResponseDTO<MangaSummaryDTO>> {
+  const url = `${API_BASE_URL}/manga/${id}/related?page=${page}&size=${size}`;
+  return cachedFetch<PagedResponseDTO<MangaSummaryDTO>>(url, { cacheTtl: CACHE_TTL.LISTING });
 }
 
 // ============================================
@@ -239,7 +294,6 @@ export async function getGenres(): Promise<Genre[]> {
 
 /**
  * Get optimized cover image URL
- * Falls back to original if no optimization needed
  */
 export function getCoverImageUrl(cover: string): string {
   if (!cover) return "/placeholder-cover.svg";
@@ -249,11 +303,9 @@ export function getCoverImageUrl(cover: string): string {
 
 /**
  * Prefetch and cache data for a page
- * Useful for hover/prefetch optimization
  */
 export function prefetchMangaDetail(id: string): void {
-  const url = `${API_BASE_URL}/api/manga/${id}`;
-  // Just trigger the fetch, result will be cached automatically
+  const url = `${API_BASE_URL}/manga/${id}`;
   cachedFetch(url, { cacheTtl: CACHE_TTL.DETAIL }).catch(() => {
     // Silent fail for prefetch
   });

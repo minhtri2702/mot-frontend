@@ -6,7 +6,8 @@ import { Search, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { getCoverImageUrl } from "@/lib/api";
+import { searchManga, getCoverImageUrl } from "@/lib/api";
+import type { MangaSummaryDTO } from "@/lib/api";
 
 interface SearchResult {
   id: string;
@@ -14,22 +15,6 @@ interface SearchResult {
   cover: string;
   chapter?: number | null;
 }
-
-// Mock search data
-const mockSearchData: SearchResult[] = [
-  { id: "1", title: "One Piece", cover: "https://ext.same-assets.com/4185522578/4110211349.jpg", chapter: 1112 },
-  { id: "2", title: "Jujutsu Kaisen", cover: "https://ext.same-assets.com/4185522578/2908889711.jpg", chapter: 256 },
-  { id: "3", title: "Chainsaw Man", cover: "https://ext.same-assets.com/4185522578/3267442566.jpg", chapter: 172 },
-  { id: "4", title: "Spy x Family", cover: "https://ext.same-assets.com/4185522578/1173669990.jpg", chapter: 98 },
-  { id: "5", title: "Demon Slayer", cover: "https://ext.same-assets.com/4185522578/2551993677.jpg", chapter: 205 },
-  { id: "6", title: "Attack on Titan", cover: "https://ext.same-assets.com/4185522578/2815673297.jpg", chapter: 139 },
-  { id: "7", title: "Tokyo Revengers", cover: "https://ext.same-assets.com/4185522578/3081776352.jpg", chapter: 278 },
-  { id: "8", title: "One Punch Man", cover: "https://ext.same-assets.com/4185522578/1945673209.jpg", chapter: 200 },
-  { id: "9", title: "My Hero Academia", cover: "https://ext.same-assets.com/4185522578/1481122338.jpg", chapter: 420 },
-  { id: "10", title: "Dragon Ball Super", cover: "https://ext.same-assets.com/4185522578/2184428774.jpg", chapter: 102 },
-  { id: "11", title: "Haikyuu!!", cover: "https://ext.same-assets.com/4185522578/3518337924.jpg", chapter: 402 },
-  { id: "12", title: "Black Clover", cover: "https://ext.same-assets.com/4185522578/3947723584.jpg", chapter: 368 },
-];
 
 // Memoized search result item
 const SearchResultItem = memo(function SearchResultItem({
@@ -102,7 +87,6 @@ export default function SearchDialog() {
   // Focus input when opened
   useEffect(() => {
     if (isOpen && inputRef.current) {
-      // Small delay to ensure dialog is rendered
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [isOpen]);
@@ -131,14 +115,24 @@ export default function SearchDialog() {
 
     // Debounce search
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      const q = query.toLowerCase().trim();
-      const filtered = mockSearchData.filter(
-        (item) => item.title.toLowerCase().includes(q)
-      );
-      setResults(filtered.slice(0, 8));
-      setSelectedIndex(-1);
-      setLoading(false);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const data = await searchManga(query.trim(), 0, 8);
+        setResults(
+          data.content.map((m: MangaSummaryDTO) => ({
+            id: m.id,
+            title: m.title,
+            cover: m.coverImagePath,
+            chapter: m.latestChapter,
+          }))
+        );
+        setSelectedIndex(-1);
+      } catch (error) {
+        console.error("Search failed:", error);
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
     }, 150);
 
     return () => {

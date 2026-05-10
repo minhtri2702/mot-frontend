@@ -4,39 +4,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import MangaCard from "@/components/manga-card";
 import { MangaGridSkeleton } from "@/components/manga-card-skeleton";
+import { getLatestUpdates, formatRelativeTime } from "@/lib/api";
+import type { MangaSummaryDTO } from "@/lib/api";
 import type { MangaCardData } from "@/lib/types";
-
-// Mock data generator - returns a page of results
-const generateMockPage = (page: number): MangaCardData[] => {
-  const allItems: MangaCardData[] = [
-    { id: "101", stt: 101, title: "One Piece", cover: "https://ext.same-assets.com/4185522578/4110211349.jpg", views: 12500000, followers: 1500000, likes: 4.8, chapter: 1112, updatedAt: "2 giờ trước" },
-    { id: "102", stt: 102, title: "Jujutsu Kaisen", cover: "https://ext.same-assets.com/4185522578/2908889711.jpg", views: 8900000, followers: 980000, likes: 4.7, chapter: 256, updatedAt: "3 giờ trước" },
-    { id: "103", stt: 103, title: "Dragon Ball Super", cover: "https://ext.same-assets.com/4185522578/2184428774.jpg", views: 7500000, followers: 850000, likes: 4.6, chapter: 102, updatedAt: "4 giờ trước" },
-    { id: "104", stt: 104, title: "My Hero Academia", cover: "https://ext.same-assets.com/4185522578/1481122338.jpg", views: 9200000, followers: 1100000, likes: 4.7, chapter: 420, updatedAt: "5 giờ trước" },
-    { id: "105", stt: 105, title: "Black Clover", cover: "https://ext.same-assets.com/4185522578/3947723584.jpg", views: 6800000, followers: 720000, likes: 4.5, chapter: 368, updatedAt: "6 giờ trước" },
-    { id: "106", stt: 106, title: "Demon Slayer", cover: "https://ext.same-assets.com/4185522578/2551993677.jpg", views: 15000000, followers: 2000000, likes: 4.9, chapter: 205, updatedAt: "6 giờ trước" },
-    { id: "107", stt: 107, title: "Tokyo Revengers", cover: "https://ext.same-assets.com/4185522578/3081776352.jpg", views: 7200000, followers: 800000, likes: 4.6, chapter: 278, updatedAt: "7 giờ trước" },
-    { id: "108", stt: 108, title: "One Punch Man", cover: "https://ext.same-assets.com/4185522578/1945673209.jpg", views: 8500000, followers: 950000, likes: 4.7, chapter: 200, updatedAt: "8 giờ trước" },
-    { id: "109", stt: 109, title: "Haikyuu!!", cover: "https://ext.same-assets.com/4185522578/3518337924.jpg", views: 6200000, followers: 700000, likes: 4.5, chapter: 402, updatedAt: "9 giờ trước" },
-    { id: "110", stt: 110, title: "Attack on Titan", cover: "https://ext.same-assets.com/4185522578/2815673297.jpg", views: 18000000, followers: 2500000, likes: 4.9, chapter: 139, updatedAt: "10 giờ trước" },
-    { id: "111", stt: 111, title: "Naruto", cover: "https://ext.same-assets.com/4185522578/4110211349.jpg", views: 20000000, followers: 3000000, likes: 4.9, chapter: 700, updatedAt: "1 ngày trước" },
-    { id: "112", stt: 112, title: "Bleach", cover: "https://ext.same-assets.com/4185522578/2908889711.jpg", views: 11000000, followers: 1300000, likes: 4.7, chapter: 686, updatedAt: "1 ngày trước" },
-    { id: "113", stt: 113, title: "Hunter x Hunter", cover: "https://ext.same-assets.com/4185522578/2184428774.jpg", views: 9500000, followers: 1050000, likes: 4.8, chapter: 400, updatedAt: "2 ngày trước" },
-    { id: "114", stt: 114, title: "Fullmetal Alchemist", cover: "https://ext.same-assets.com/4185522578/1481122338.jpg", views: 8500000, followers: 950000, likes: 4.9, chapter: 108, updatedAt: "2 ngày trước" },
-    { id: "115", stt: 115, title: "Death Note", cover: "https://ext.same-assets.com/4185522578/3947723584.jpg", views: 12000000, followers: 1400000, likes: 4.8, chapter: 108, updatedAt: "3 ngày trước" },
-  ];
-
-  const perPage = 10;
-  const start = (page - 1) * perPage;
-  const end = start + perPage;
-  return allItems.slice(start, end);
-};
-
-const TOTAL_PAGES = 12;
 
 export default function LatestUpdatesPage() {
   const [items, setItems] = useState<MangaCardData[]>([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -46,12 +20,29 @@ export default function LatestUpdatesPage() {
   useEffect(() => {
     async function loadInitial() {
       setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 400));
-      const data = generateMockPage(1);
-      setItems(data);
-      setPage(1);
-      setHasMore(TOTAL_PAGES > 1);
-      setLoading(false);
+      try {
+        const data = await getLatestUpdates(0, 10);
+        setItems(
+          data.content.map((m: MangaSummaryDTO) => ({
+            id: m.id,
+            stt: m.stt,
+            title: m.title,
+            cover: m.coverImagePath,
+            views: m.views,
+            followers: m.followers,
+            likes: m.likes,
+            chapter: m.latestChapter,
+            updatedAt: formatRelativeTime(m.latestChapterUpdatedAt),
+            status: m.status,
+          }))
+        );
+        setPage(0);
+        setHasMore(!data.last);
+      } catch (error) {
+        console.error("Failed to load latest updates:", error);
+      } finally {
+        setLoading(false);
+      }
     }
     loadInitial();
   }, []);
@@ -60,17 +51,33 @@ export default function LatestUpdatesPage() {
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
-    await new Promise(resolve => setTimeout(resolve, 600));
-    const nextPage = page + 1;
-    const data = generateMockPage(nextPage);
-    if (data.length === 0) {
-      setHasMore(false);
-    } else {
-      setItems(prev => [...prev, ...data]);
-      setPage(nextPage);
-      setHasMore(nextPage < TOTAL_PAGES);
+    try {
+      const nextPage = page + 1;
+      const data = await getLatestUpdates(nextPage, 10);
+      const newItems = data.content.map((m: MangaSummaryDTO) => ({
+        id: m.id,
+        stt: m.stt,
+        title: m.title,
+        cover: m.coverImagePath,
+        views: m.views,
+        followers: m.followers,
+        likes: m.likes,
+        chapter: m.latestChapter,
+        updatedAt: formatRelativeTime(m.latestChapterUpdatedAt),
+        status: m.status,
+      }));
+      if (newItems.length === 0) {
+        setHasMore(false);
+      } else {
+        setItems(prev => [...prev, ...newItems]);
+        setPage(nextPage);
+        setHasMore(!data.last);
+      }
+    } catch (error) {
+      console.error("Failed to load more:", error);
+    } finally {
+      setLoadingMore(false);
     }
-    setLoadingMore(false);
   }, [page, loadingMore, hasMore]);
 
   // Intersection Observer for infinite scroll

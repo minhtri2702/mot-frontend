@@ -4,39 +4,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { TrendingUp, Loader2 } from "lucide-react";
 import MangaCard from "@/components/manga-card";
 import { MangaGridSkeleton } from "@/components/manga-card-skeleton";
+import { getHotManga } from "@/lib/api";
+import type { MangaSummaryDTO } from "@/lib/api";
 import type { MangaCardData } from "@/lib/types";
-
-// Mock data generator - returns a page of results
-const generateMockPage = (page: number): MangaCardData[] => {
-  const allItems: MangaCardData[] = [
-    { id: "201", stt: 201, title: "Demon Slayer", cover: "https://ext.same-assets.com/4185522578/2551993677.jpg", views: 15000000, followers: 2000000, likes: 4.9 },
-    { id: "202", stt: 202, title: "Jujutsu Kaisen", cover: "https://ext.same-assets.com/4185522578/2908889711.jpg", views: 8900000, followers: 980000, likes: 4.8 },
-    { id: "203", stt: 203, title: "Chainsaw Man", cover: "https://ext.same-assets.com/4185522578/3267442566.jpg", views: 10500000, followers: 1200000, likes: 4.7 },
-    { id: "204", stt: 204, title: "One Piece", cover: "https://ext.same-assets.com/4185522578/4110211349.jpg", views: 12500000, followers: 1500000, likes: 4.9 },
-    { id: "205", stt: 205, title: "Spy x Family", cover: "https://ext.same-assets.com/4185522578/1173669990.jpg", views: 6800000, followers: 750000, likes: 4.5 },
-    { id: "206", stt: 206, title: "Tokyo Revengers", cover: "https://ext.same-assets.com/4185522578/3081776352.jpg", views: 7200000, followers: 800000, likes: 4.6 },
-    { id: "207", stt: 207, title: "One Punch Man", cover: "https://ext.same-assets.com/4185522578/1945673209.jpg", views: 8500000, followers: 950000, likes: 4.7 },
-    { id: "208", stt: 208, title: "Attack on Titan", cover: "https://ext.same-assets.com/4185522578/2815673297.jpg", views: 18000000, followers: 2500000, likes: 4.9 },
-    { id: "209", stt: 209, title: "My Hero Academia", cover: "https://ext.same-assets.com/4185522578/1481122338.jpg", views: 9200000, followers: 1100000, likes: 4.7 },
-    { id: "210", stt: 210, title: "Dragon Ball Super", cover: "https://ext.same-assets.com/4185522578/2184428774.jpg", views: 7500000, followers: 850000, likes: 4.6 },
-    { id: "211", stt: 211, title: "Naruto Shippuden", cover: "https://ext.same-assets.com/4185522578/4110211349.jpg", views: 20000000, followers: 3000000, likes: 4.9 },
-    { id: "212", stt: 212, title: "Bleach TYBW", cover: "https://ext.same-assets.com/4185522578/2908889711.jpg", views: 11000000, followers: 1300000, likes: 4.7 },
-    { id: "213", stt: 213, title: "Hunter x Hunter", cover: "https://ext.same-assets.com/4185522578/2184428774.jpg", views: 9500000, followers: 1050000, likes: 4.8 },
-    { id: "214", stt: 214, title: "Fullmetal Alchemist", cover: "https://ext.same-assets.com/4185522578/1481122338.jpg", views: 8500000, followers: 950000, likes: 4.9 },
-    { id: "215", stt: 215, title: "Death Note", cover: "https://ext.same-assets.com/4185522578/3947723584.jpg", views: 12000000, followers: 1400000, likes: 4.8 },
-  ];
-
-  const perPage = 10;
-  const start = (page - 1) * perPage;
-  const end = start + perPage;
-  return allItems.slice(start, end);
-};
-
-const TOTAL_PAGES = 12;
 
 export default function TrendingPage() {
   const [items, setItems] = useState<MangaCardData[]>([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -46,12 +20,27 @@ export default function TrendingPage() {
   useEffect(() => {
     async function loadInitial() {
       setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 400));
-      const data = generateMockPage(1);
-      setItems(data);
-      setPage(1);
-      setHasMore(TOTAL_PAGES > 1);
-      setLoading(false);
+      try {
+        const data = await getHotManga(0, 10);
+        setItems(
+          data.content.map((m: MangaSummaryDTO) => ({
+            id: m.id,
+            stt: m.stt,
+            title: m.title,
+            cover: m.coverImagePath,
+            views: m.views,
+            followers: m.followers,
+            likes: m.likes,
+            status: m.status,
+          }))
+        );
+        setPage(0);
+        setHasMore(!data.last);
+      } catch (error) {
+        console.error("Failed to load hot manga:", error);
+      } finally {
+        setLoading(false);
+      }
     }
     loadInitial();
   }, []);
@@ -60,17 +49,31 @@ export default function TrendingPage() {
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
-    await new Promise(resolve => setTimeout(resolve, 600));
-    const nextPage = page + 1;
-    const data = generateMockPage(nextPage);
-    if (data.length === 0) {
-      setHasMore(false);
-    } else {
-      setItems(prev => [...prev, ...data]);
-      setPage(nextPage);
-      setHasMore(nextPage < TOTAL_PAGES);
+    try {
+      const nextPage = page + 1;
+      const data = await getHotManga(nextPage, 10);
+      const newItems = data.content.map((m: MangaSummaryDTO) => ({
+        id: m.id,
+        stt: m.stt,
+        title: m.title,
+        cover: m.coverImagePath,
+        views: m.views,
+        followers: m.followers,
+        likes: m.likes,
+        status: m.status,
+      }));
+      if (newItems.length === 0) {
+        setHasMore(false);
+      } else {
+        setItems(prev => [...prev, ...newItems]);
+        setPage(nextPage);
+        setHasMore(!data.last);
+      }
+    } catch (error) {
+      console.error("Failed to load more:", error);
+    } finally {
+      setLoadingMore(false);
     }
-    setLoadingMore(false);
   }, [page, loadingMore, hasMore]);
 
   // Intersection Observer for infinite scroll

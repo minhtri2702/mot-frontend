@@ -6,31 +6,8 @@ import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { ChevronLeft, ChevronRight, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChapterReaderSkeleton } from "@/components/manga-card-skeleton";
-
-// Mock chapter images
-const mockChapterImages = [
-  "https://ext.same-assets.com/4185522578/4110211349.jpg",
-  "https://ext.same-assets.com/4185522578/2908889711.jpg",
-  "https://ext.same-assets.com/4185522578/3267442566.jpg",
-  "https://ext.same-assets.com/4185522578/1173669990.jpg",
-  "https://ext.same-assets.com/4185522578/2551993677.jpg",
-  "https://ext.same-assets.com/4185522578/2815673297.jpg",
-  "https://ext.same-assets.com/4185522578/1945673209.jpg",
-  "https://ext.same-assets.com/4185522578/3081776352.jpg",
-  "https://ext.same-assets.com/4185522578/1481122338.jpg",
-  "https://ext.same-assets.com/4185522578/2184428774.jpg",
-];
-
-// Mock chapter info
-const mockChapterInfo = {
-  mangaId: "1",
-  mangaTitle: "One Piece",
-  chapterId: "ch1",
-  chapterNumber: 1112,
-  chapterTitle: "Chương 1112",
-  prevChapterId: null,
-  nextChapterId: "ch2",
-};
+import { getChapterDetail, getCoverImageUrl } from "@/lib/api";
+import type { ChapterDetailDTO } from "@/lib/api";
 
 type ReadingMode = "scroll" | "page";
 
@@ -85,7 +62,7 @@ const LazyChapterImage = memo(function LazyChapterImage({
           className={`transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
         >
           <Image
-            src={src}
+            src={getCoverImageUrl(src)}
             alt={alt}
             width={800}
             height={1200}
@@ -105,8 +82,7 @@ export default function ChapterReaderPage() {
   const id = params.id as string;
   const chapterId = params.chapterId as string;
 
-  const [images, setImages] = useState<string[]>([]);
-  const [chapterInfo, setChapterInfo] = useState<typeof mockChapterInfo | null>(null);
+  const [chapter, setChapter] = useState<ChapterDetailDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [readingMode, setReadingMode] = useState<ReadingMode>("scroll");
   const [currentPage, setCurrentPage] = useState(0);
@@ -119,7 +95,7 @@ export default function ChapterReaderPage() {
 
   // Load saved reading position
   useEffect(() => {
-    if (!chapterInfo || loading) return;
+    if (!chapter || loading) return;
     const savedKey = `reading-${id}-${chapterId}`;
     try {
       const saved = localStorage.getItem(savedKey);
@@ -132,11 +108,11 @@ export default function ChapterReaderPage() {
         }
       }
     } catch {}
-  }, [chapterInfo, loading, id, chapterId]);
+  }, [chapter, loading, id, chapterId]);
 
   // Save reading position on scroll (throttled with RAF)
   useEffect(() => {
-    if (!chapterInfo || loading) return;
+    if (!chapter || loading) return;
     const savedKey = `reading-${id}-${chapterId}`;
 
     const handleScroll = () => {
@@ -165,19 +141,19 @@ export default function ChapterReaderPage() {
       ref?.removeEventListener("scroll", handleScroll);
       if (progressRAFRef.current) cancelAnimationFrame(progressRAFRef.current);
     };
-  }, [chapterInfo, loading, id, chapterId]);
+  }, [chapter, loading, id, chapterId]);
 
   // Keyboard navigation
   useEffect(() => {
-    if (!chapterInfo || loading) return;
+    if (!chapter || loading) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft" && chapterInfo.prevChapterId) {
+      if (e.key === "ArrowLeft" && chapter.navigation.prevChapterId) {
         e.preventDefault();
-        window.location.href = `/truyen/${id}/chuong/${chapterInfo.prevChapterId}`;
-      } else if (e.key === "ArrowRight" && chapterInfo.nextChapterId) {
+        window.location.href = `/truyen/${id}/chuong/${chapter.navigation.prevChapterId}`;
+      } else if (e.key === "ArrowRight" && chapter.navigation.nextChapterId) {
         e.preventDefault();
-        window.location.href = `/truyen/${id}/chuong/${chapterInfo.nextChapterId}`;
+        window.location.href = `/truyen/${id}/chuong/${chapter.navigation.nextChapterId}`;
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         scrollRef.current?.scrollBy({ top: -window.innerHeight * 0.8, behavior: "smooth" });
@@ -192,20 +168,20 @@ export default function ChapterReaderPage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [chapterInfo, loading, id, readingMode]);
+  }, [chapter, loading, id, readingMode]);
 
   // Fetch data
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setChapterInfo({
-        ...mockChapterInfo,
-        mangaId: id,
-        chapterId: chapterId,
-      });
-      setImages(mockChapterImages);
-      setLoading(false);
+      try {
+        const data = await getChapterDetail(id, parseInt(chapterId));
+        setChapter(data);
+      } catch (error) {
+        console.error("Failed to load chapter:", error);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchData();
   }, [id, chapterId]);
@@ -214,7 +190,7 @@ export default function ChapterReaderPage() {
     return <ChapterReaderSkeleton />;
   }
 
-  if (!chapterInfo) {
+  if (!chapter) {
     return (
       <div className="container py-8">
         <div className="text-center py-20">
@@ -228,6 +204,7 @@ export default function ChapterReaderPage() {
   }
 
   const bgClass = readingBg === "black" ? "bg-black" : readingBg === "white" ? "bg-white" : "bg-zinc-800";
+  const chapterTitle = chapter.chapterName || `Chương ${chapter.chapterNumber}`;
 
   return (
     <div className={`min-h-screen ${bgClass}`}>
@@ -235,14 +212,14 @@ export default function ChapterReaderPage() {
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="container flex items-center justify-between py-3">
           <div className="flex items-center gap-4">
-            <Link href={`/truyen/${chapterInfo.mangaId}`} className="hover:text-primary transition-colors">
+            <Link href={`/truyen/${id}`} className="hover:text-primary transition-colors">
               <ChevronLeft className="h-5 w-5" />
             </Link>
             <div>
-              <Link href={`/truyen/${chapterInfo.mangaId}`} className="text-sm font-medium hover:text-primary transition-colors">
-                {chapterInfo.mangaTitle}
+              <Link href={`/truyen/${id}`} className="text-sm font-medium hover:text-primary transition-colors">
+                {id.slice(0, 8)}...
               </Link>
-              <p className="text-xs text-muted-foreground">{chapterInfo.chapterTitle}</p>
+              <p className="text-xs text-muted-foreground">{chapterTitle}</p>
             </div>
           </div>
 
@@ -270,9 +247,9 @@ export default function ChapterReaderPage() {
               {readingBg === "black" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
             </Button>
 
-            {chapterInfo.prevChapterId ? (
+            {chapter.navigation.prevChapterId ? (
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/truyen/${chapterInfo.mangaId}/chuong/${chapterInfo.prevChapterId}`}>
+                <Link href={`/truyen/${id}/chuong/${chapter.navigation.prevChapterId}`}>
                   <ChevronLeft className="mr-1 h-4 w-4" />
                   Trước
                 </Link>
@@ -283,9 +260,9 @@ export default function ChapterReaderPage() {
                 Trước
               </Button>
             )}
-            {chapterInfo.nextChapterId ? (
+            {chapter.navigation.nextChapterId ? (
               <Button variant="outline" size="sm" asChild>
-                <Link href={`/truyen/${chapterInfo.mangaId}/chuong/${chapterInfo.nextChapterId}`}>
+                <Link href={`/truyen/${id}/chuong/${chapter.navigation.nextChapterId}`}>
                   Sau
                   <ChevronRight className="ml-1 h-4 w-4" />
                 </Link>
@@ -316,12 +293,12 @@ export default function ChapterReaderPage() {
       >
         <div ref={contentRef} className="max-w-4xl mx-auto">
           {readingMode === "scroll" ? (
-            images.length > 0 ? (
-              images.map((image, index) => (
+            chapter.imageUrls.length > 0 ? (
+              chapter.imageUrls.map((imageUrl, index) => (
                 <LazyChapterImage
                   key={index}
-                  src={image}
-                  alt={`${chapterInfo.chapterTitle} - Trang ${index + 1}`}
+                  src={imageUrl}
+                  alt={`${chapterTitle} - Trang ${index + 1}`}
                   index={index}
                 />
               ))
@@ -332,12 +309,12 @@ export default function ChapterReaderPage() {
             )
           ) : (
             <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
-              {images.length > 0 ? (
+              {chapter.imageUrls.length > 0 ? (
                 <>
                   <div className="relative w-full max-w-3xl">
                     <Image
-                      src={images[currentPage]}
-                      alt={`${chapterInfo.chapterTitle} - Trang ${currentPage + 1}`}
+                      src={getCoverImageUrl(chapter.imageUrls[currentPage])}
+                      alt={`${chapterTitle} - Trang ${currentPage + 1}`}
                       width={800}
                       height={1200}
                       className="w-full h-auto rounded-lg shadow-lg"
@@ -355,13 +332,13 @@ export default function ChapterReaderPage() {
                       Trang trước
                     </Button>
                     <span className="text-sm text-muted-foreground">
-                      {currentPage + 1} / {images.length}
+                      {currentPage + 1} / {chapter.imageUrls.length}
                     </span>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentPage(Math.min(images.length - 1, currentPage + 1))}
-                      disabled={currentPage === images.length - 1}
+                      onClick={() => setCurrentPage(Math.min(chapter.imageUrls.length - 1, currentPage + 1))}
+                      disabled={currentPage === chapter.imageUrls.length - 1}
                     >
                       Trang sau
                       <ChevronRight className="ml-1 h-4 w-4" />
@@ -380,9 +357,9 @@ export default function ChapterReaderPage() {
       {readingMode === "scroll" && (
         <div className="bg-background border-t">
           <div className="container flex items-center justify-center gap-4 py-4">
-            {chapterInfo.prevChapterId ? (
+            {chapter.navigation.prevChapterId ? (
               <Button variant="outline" asChild>
-                <Link href={`/truyen/${chapterInfo.mangaId}/chuong/${chapterInfo.prevChapterId}`}>
+                <Link href={`/truyen/${id}/chuong/${chapter.navigation.prevChapterId}`}>
                   <ChevronLeft className="mr-1 h-4 w-4" />
                   Chương trước
                 </Link>
@@ -394,13 +371,13 @@ export default function ChapterReaderPage() {
               </Button>
             )}
             <Button variant="outline" asChild>
-              <Link href={`/truyen/${chapterInfo.mangaId}`}>
+              <Link href={`/truyen/${id}`}>
                 Danh sách chương
               </Link>
             </Button>
-            {chapterInfo.nextChapterId ? (
+            {chapter.navigation.nextChapterId ? (
               <Button variant="outline" asChild>
-                <Link href={`/truyen/${chapterInfo.mangaId}/chuong/${chapterInfo.nextChapterId}`}>
+                <Link href={`/truyen/${id}/chuong/${chapter.navigation.nextChapterId}`}>
                   Chương sau
                   <ChevronRight className="ml-1 h-4 w-4" />
                 </Link>
