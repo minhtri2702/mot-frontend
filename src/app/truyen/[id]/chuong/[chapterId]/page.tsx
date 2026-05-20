@@ -1,12 +1,11 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { ChevronLeft, ChevronRight, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChapterReaderSkeleton } from "@/components/manga-card-skeleton";
-import { getChapterDetail, getCoverImageUrl } from "@/lib/api";
+import { getChapterDetail } from "@/lib/api";
 import type { ChapterDetailDTO } from "@/lib/api";
 
 type ReadingMode = "scroll" | "page";
@@ -61,14 +60,11 @@ const LazyChapterImage = memo(function LazyChapterImage({
         <div
           className={`transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
         >
-          <Image
-            src={getCoverImageUrl(src)}
+          <img
+            src={src}
             alt={alt}
-            width={800}
-            height={1200}
             className="w-full h-auto"
-            priority={index < 2}
-            loading={index < 3 ? undefined : "lazy"}
+            loading={index < 3 ? "eager" : "lazy"}
             onLoad={() => setIsLoaded(true)}
           />
         </div>
@@ -312,13 +308,10 @@ export default function ChapterReaderPage() {
               {chapter.imageUrls.length > 0 ? (
                 <>
                   <div className="relative w-full max-w-3xl">
-                    <Image
-                      src={getCoverImageUrl(chapter.imageUrls[currentPage])}
+                    <img
+                      src={chapter.imageUrls[currentPage]}
                       alt={`${chapterTitle} - Trang ${currentPage + 1}`}
-                      width={800}
-                      height={1200}
                       className="w-full h-auto rounded-lg shadow-lg"
-                      priority
                     />
                   </div>
                   <div className="flex items-center gap-4 mt-6">

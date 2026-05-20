@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Star, Clock, Heart, Users } from "lucide-react";
@@ -19,14 +18,12 @@ const MangaCard = memo(function MangaCard({ manga, showBadge = "none" }: MangaCa
   return (
     <Link href={`/truyen/${manga.id}`} className="group">
       <div className="relative mb-2 aspect-[2/3] overflow-hidden rounded-md shadow">
-        <Image
-          src={getCoverImageUrl(manga.cover)}
+        <img
+          src={manga.cover}
           alt={manga.title}
-          fill
-          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 16vw"
-          style={{ objectFit: "cover" }}
-          className="group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          loading="eager"
+          onError={(e) => { e.currentTarget.src = "/placeholder-cover.svg"; }}
         />
 
         {/* Badge - only render the active one */}

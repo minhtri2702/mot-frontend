@@ -8,13 +8,28 @@ import { getHotManga } from "@/lib/api";
 import type { MangaSummaryDTO } from "@/lib/api";
 import type { MangaCardData } from "@/lib/types";
 
+function toCardData(m: MangaSummaryDTO): MangaCardData {
+  return {
+    id: m.id,
+    stt: m.stt,
+    title: m.title,
+    cover: m.coverImagePath,
+    views: m.views,
+    followers: m.followers,
+    likes: m.likes,
+    status: m.status,
+  };
+}
+
 export default function TrendingPage() {
   const [items, setItems] = useState<MangaCardData[]>([]);
-  const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const pageRef = useRef(0);
+  const loadingMoreRef = useRef(false);
+  const hasMoreRef = useRef(true);
 
   // Initial load
   useEffect(() => {
@@ -22,19 +37,9 @@ export default function TrendingPage() {
       setLoading(true);
       try {
         const data = await getHotManga(0, 10);
-        setItems(
-          data.content.map((m: MangaSummaryDTO) => ({
-            id: m.id,
-            stt: m.stt,
-            title: m.title,
-            cover: m.coverImagePath,
-            views: m.views,
-            followers: m.followers,
-            likes: m.likes,
-            status: m.status,
-          }))
-        );
-        setPage(0);
+        setItems(data.content.map(toCardData));
+        pageRef.current = 0;
+        hasMoreRef.current = !data.last;
         setHasMore(!data.last);
       } catch (error) {
         console.error("Failed to load hot manga:", error);
@@ -45,53 +50,49 @@ export default function TrendingPage() {
     loadInitial();
   }, []);
 
-  // Load more pages
+  // Load more pages - uses refs to avoid stale closure
   const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
+    if (loadingMoreRef.current || !hasMoreRef.current) return;
+    loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
-      const nextPage = page + 1;
+      const nextPage = pageRef.current + 1;
       const data = await getHotManga(nextPage, 10);
-      const newItems = data.content.map((m: MangaSummaryDTO) => ({
-        id: m.id,
-        stt: m.stt,
-        title: m.title,
-        cover: m.coverImagePath,
-        views: m.views,
-        followers: m.followers,
-        likes: m.likes,
-        status: m.status,
-      }));
+      const newItems = data.content.map(toCardData);
       if (newItems.length === 0) {
+        hasMoreRef.current = false;
         setHasMore(false);
       } else {
         setItems(prev => [...prev, ...newItems]);
-        setPage(nextPage);
+        pageRef.current = nextPage;
+        hasMoreRef.current = !data.last;
         setHasMore(!data.last);
       }
     } catch (error) {
       console.error("Failed to load more:", error);
     } finally {
+      loadingMoreRef.current = false;
       setLoadingMore(false);
     }
-  }, [page, loadingMore, hasMore]);
+  }, []); // No dependencies - all state via refs
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
-    if (!sentinelRef.current || !hasMore) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+        if (entries[0].isIntersecting && hasMoreRef.current && !loadingMoreRef.current) {
           loadMore();
         }
       },
       { threshold: 0.1 }
     );
 
-    observer.observe(sentinelRef.current);
+    observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasMore, loadingMore, loadMore]);
+  }, [loadMore]); // Only depends on loadMore (which is stable now)
 
   return (
     <div className="container py-8 space-y-10">

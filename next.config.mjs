@@ -13,6 +13,7 @@ const nextConfig = {
       "ext.same-assets.com",
       "ugc.same-assets.com",
       "www.svgrepo.com",
+      "100.94.58.103",
     ],
     remotePatterns: [
       {
@@ -40,7 +41,16 @@ const nextConfig = {
         hostname: "www.svgrepo.com",
         pathname: "/**",
       },
+      {
+        protocol: "http",
+        hostname: "100.94.58.103",
+        port: "9000",
+        pathname: "/**",
+      },
     ],
+  },
+  async rewrites() {
+    return [];
   },
 };
 

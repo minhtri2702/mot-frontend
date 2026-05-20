@@ -190,7 +190,7 @@ export async function getFeaturedManga(): Promise<MangaSummaryDTO[]> {
  */
 export async function getLatestUpdates(page: number = 0, size: number = 20): Promise<PagedResponseDTO<MangaSummaryDTO>> {
   const url = `${API_BASE_URL}/manga/latest-updated?page=${page}&size=${size}`;
-  return cachedFetch<PagedResponseDTO<MangaSummaryDTO>>(url, { cacheTtl: CACHE_TTL.LISTING });
+  return cachedFetch<PagedResponseDTO<MangaSummaryDTO>>(url, { skipCache: true, cacheTtl: CACHE_TTL.LISTING });
 }
 
 /**
@@ -289,16 +289,39 @@ export async function getRelatedManga(id: string, page: number = 0, size: number
 }
 
 // ============================================
+// Reading History API
+// ============================================
+
+export interface ReadingHistoryDTO {
+  mangaId: string;
+  mangaTitle: string;
+  coverImagePath: string;
+  stt: number;
+  chapterId: number;
+  chapterNumber: number;
+  chapterName: string;
+  lastReadDate: string;
+}
+
+/**
+ * Get reading history for a user
+ */
+export async function getReadingHistory(userId: string, limit: number = 10): Promise<ReadingHistoryDTO[]> {
+  const url = `${API_BASE_URL}/user/${userId}/reading-history?limit=${limit}`;
+  return cachedFetch<ReadingHistoryDTO[]>(url, { skipCache: true });
+}
+
+// ============================================
 // Image URL Helper
 // ============================================
 
 /**
- * Get optimized cover image URL
+ * Get cover image URL
+ * Backend returns presigned URLs directly from MinIO/S3
  */
 export function getCoverImageUrl(cover: string): string {
   if (!cover) return "/placeholder-cover.svg";
-  if (cover.startsWith("http")) return cover;
-  return `${API_BASE_URL}/images/${cover}`;
+  return cover;
 }
 
 /**
