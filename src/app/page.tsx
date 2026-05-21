@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   Carousel,
   CarouselContent,
@@ -7,16 +8,21 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { TrendingUp, Clock, Flame, Tag, Eye, ChevronRight, History } from "lucide-react";
+import { TrendingUp, Clock, Flame, Tag, Eye, ChevronRight, History, Heart } from "lucide-react";
 import FeaturedMangaCard from "@/components/featured-manga-card";
 import MangaCard from "@/components/manga-card";
 import { MangaGridSkeleton } from "@/components/manga-card-skeleton";
-import { getFeaturedManga, getLatestUpdates, getHotManga, getGenres, getReadingHistory, formatRelativeTime, formatNumber } from "@/lib/api";
+import { getFeaturedManga, getLatestUpdates, getHotManga, getGenres, getReadingHistory, getFavorites, formatRelativeTime, formatNumber, getCoverImageUrl } from "@/lib/api";
+import type { FavoriteDTO } from "@/lib/api";
 import type { MangaSummaryDTO, GenreDTO, ReadingHistoryDTO } from "@/lib/api";
 import type { MangaCardData, FeaturedMangaData } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
+import { getReadingHistory as getLocalReadingHistory, removeFromHistory as removeLocalHistory } from "@/lib/reading-history";
+import type { ReadingHistoryEntry } from "@/lib/reading-history";
+import Image from "next/image";
 
 // ===== Custom hooks =====
 
@@ -93,18 +99,148 @@ function toCardData(m: MangaSummaryDTO): MangaCardData {
   };
 }
 
+// ===== Reading History Item (with cover image) =====
+
+function ReadingHistoryItem({ item, onRemove }: { item: ReadingHistoryEntry; onRemove: (mangaId: string) => void }) {
+  return (
+    <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors group">
+      <Link
+        href={`/truyen/${item.mangaId}/chuong/${item.chapterId}`}
+        className="flex gap-2 flex-1 min-w-0"
+      >
+        <div className="w-8 h-11 rounded overflow-hidden flex-shrink-0 relative bg-muted">
+          <img
+            src={getCoverImageUrl(item.coverImagePath)}
+            alt={item.mangaTitle}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="eager"
+            onError={(e) => { e.currentTarget.src = "/placeholder-cover.svg"; }}
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+            {item.mangaTitle}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Chương {item.chapterNumber}
+            {item.chapterName ? `: ${item.chapterName}` : ""}
+            <span className="ml-2 text-[10px] text-muted-foreground/60">
+              {formatRelativeTime(item.lastReadDate)}
+            </span>
+          </p>
+        </div>
+      </Link>
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          onRemove(item.mangaId);
+        }}
+        className="shrink-0 text-xs text-muted-foreground/50 hover:text-destructive transition-colors p-1"
+        title="Xoá khỏi lịch sử"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
+// ===== Favorites Sidebar Component =====
+
+function FavoritesSidebar({ userId }: { userId: string }) {
+  const { data: favorites, isLoading } = useQuery({
+    queryKey: ["favorites-sidebar", userId],
+    queryFn: () => getFavorites(userId, 0, 5).then(res => res.content),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex gap-3 animate-pulse">
+            <div className="w-10 h-14 bg-muted rounded" />
+            <div className="flex-1 space-y-1.5">
+              <div className="h-3 bg-muted rounded w-3/4" />
+              <div className="h-2 bg-muted rounded w-1/3" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!favorites || favorites.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground text-center py-4">
+        Chưa có truyện nào
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {favorites.map((fav) => (
+        <Link
+          key={fav.mangaId}
+          href={`/truyen/${fav.mangaId}`}
+          className="flex gap-3 group"
+        >
+          <div className="w-10 h-14 rounded overflow-hidden flex-shrink-0 relative">
+            <Image
+              src={getCoverImageUrl(fav.coverImagePath)}
+              alt={fav.title}
+              fill
+              sizes="40px"
+              style={{ objectFit: "cover" }}
+              loading="eager"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+              {fav.title}
+            </p>
+            {fav.latestChapter != null && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Chương {fav.latestChapter}
+              </p>
+            )}
+          </div>
+        </Link>
+      ))}
+      <Button variant="outline" size="sm" className="w-full mt-2" asChild>
+        <Link href="/truyen-yeu-thich">
+          Xem thêm
+          <ChevronRight className="h-3 w-3 ml-1" />
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
 // ===== Component =====
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
 
-  const { data: featuredRes = [] } = useFeaturedManga();
-  const { data: latestRes } = useLatestUpdates();
-  const { data: hotRes } = useHotManga();
+  const { data: featuredRes = [], isPending: featuredLoading } = useFeaturedManga();
+  const { data: latestRes, isPending: latestLoading } = useLatestUpdates();
+  const { data: hotRes, isPending: hotLoading } = useHotManga();
   const { data: genres = [] } = useGenres();
   const { data: readingHistory = [] } = useReadingHistory(user?.id, isAuthenticated);
 
-  const isLoading = !featuredRes.length && !latestRes && !hotRes;
+  // Lấy lịch sử đọc từ localStorage (cho cả user chưa login)
+  const [localHistory, setLocalHistory] = useState<ReadingHistoryEntry[]>([]);
+
+  useEffect(() => {
+    setLocalHistory(getLocalReadingHistory());
+  }, []);
+
+  const removeFromHistory = (mangaId: string) => {
+    removeLocalHistory(mangaId);
+    setLocalHistory(getLocalReadingHistory());
+  };
+
+  const isLoading = featuredLoading || latestLoading || hotLoading;
 
   // Map data
   const featuredManga = featuredRes.map(toFeaturedData);
@@ -122,7 +258,7 @@ export default function Home() {
           <h2 className="text-2xl font-bold mb-4">Truyện Đề Xuất</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="aspect-[2/1] bg-muted rounded-lg animate-pulse" />
+              <div key={i} className="aspect-[4/3] md:aspect-[3/2] bg-muted rounded-lg animate-pulse" />
             ))}
           </div>
         </section>
@@ -253,6 +389,31 @@ export default function Home() {
             </div>
           )}
 
+          {/* Lịch Sử Đọc Truyện (từ localStorage, không cần login) */}
+          {localHistory.length > 0 ? (
+            <div className="rounded-xl border bg-card p-4">
+              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <History className="h-4 w-4 text-primary" />
+                Lịch Sử Đọc
+              </h3>
+              <div className="space-y-2">
+                {localHistory.slice(0, 10).map((item) => (
+                  <ReadingHistoryItem key={`${item.mangaId}-${item.chapterId}`} item={item} onRemove={removeFromHistory} />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border bg-card p-4">
+              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <History className="h-4 w-4 text-primary" />
+                Lịch Sử Đọc
+              </h3>
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Bạn chưa đọc truyện nào
+              </p>
+            </div>
+          )}
+
           {/* Thể Loại */}
           {genres.length > 0 && (
             <div className="rounded-xl border bg-card p-4">
@@ -277,106 +438,20 @@ export default function Home() {
             </div>
           )}
 
-          {/* Lịch Sử Đọc Truyện */}
-          {isAuthenticated && readingHistory.length > 0 ? (
-            <div className="rounded-xl border bg-card p-4">
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                <History className="h-4 w-4 text-primary" />
-                Lịch Sử Đọc
-              </h3>
-              <div className="space-y-2">
-                {readingHistory.map((item) => (
-                  <Link
-                    key={`${item.mangaId}-${item.chapterId}`}
-                    href={`/truyen/${item.mangaId}/chuong/${item.chapterId}`}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
-                  >
-                    <div className="w-10 h-14 rounded overflow-hidden shrink-0 bg-muted">
-                      {item.coverImagePath ? (
-                        <img
-                          src={item.coverImagePath}
-                          alt={item.mangaTitle}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
-                          {item.mangaTitle?.charAt(0) || "?"}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-                        {item.mangaTitle}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Chương {item.chapterNumber}
-                        {item.chapterName ? `: ${item.chapterName}` : ""}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground/60">
-                        {formatRelativeTime(item.lastReadDate)}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ) : isAuthenticated ? (
-            <div className="rounded-xl border bg-card p-4">
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                <History className="h-4 w-4 text-primary" />
-                Lịch Sử Đọc
-              </h3>
+          {/* Truyện đang theo dõi */}
+          <div className="rounded-xl border bg-card p-4">
+            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+              <Heart className="h-4 w-4 text-red-500" />
+              Truyện đang theo dõi
+            </h3>
+            {isAuthenticated && user ? (
+              <FavoritesSidebar userId={user.id} />
+            ) : (
               <p className="text-sm text-muted-foreground text-center py-4">
-                Bạn chưa đọc truyện nào
+                <Link href="/login" className="text-primary hover:underline">Đăng nhập</Link> để theo dõi truyện
               </p>
-            </div>
-          ) : (
-            <div className="rounded-xl border bg-card p-4">
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                <History className="h-4 w-4 text-primary" />
-                Lịch Sử Đọc
-              </h3>
-              <p className="text-sm text-muted-foreground text-center py-4">
-                <Link href="/login" className="text-primary hover:underline font-medium">
-                  Đăng nhập
-                </Link>{" "}
-                để xem lịch sử đọc truyện
-              </p>
-            </div>
-          )}
-
-          {/* Đề Xuất */}
-          {trendingManga.length > 0 && (
-            <div className="rounded-xl border bg-card p-4">
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-primary" />
-                Đề Xuất
-              </h3>
-              <div className="space-y-2">
-                {trendingManga.slice(0, 4).map((manga) => (
-                  <Link
-                    key={manga.id}
-                    href={`/truyen/${manga.id}`}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-                        {manga.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {manga.status || "Đang tiến hành"}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                      <Eye className="h-3 w-3" />
-                      {formatNumber(manga.views)}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </aside>
       </div>
     </div>

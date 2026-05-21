@@ -59,11 +59,11 @@ export default {
       container: {
       center: true,
       padding: {
-        DEFAULT: '0.75rem',
-        sm: '1rem',
-        lg: '1.5rem',
-        xl: '2rem',
-        '2xl': '3rem',
+        DEFAULT: '1rem',
+        sm: '1.5rem',
+        lg: '3rem',
+        xl: '4rem',
+        '2xl': '5rem',
       },
       screens: {
         sm: '640px',

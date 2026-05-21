@@ -148,6 +148,8 @@ export interface ChapterDetailDTO {
   createdAt: string;
   imageUrls: string[];
   navigation: ChapterNavigationDTO;
+  mangaTitle?: string;
+  mangaId?: string;
 }
 
 export interface ChapterNavigationDTO {
@@ -190,7 +192,8 @@ export async function getFeaturedManga(): Promise<MangaSummaryDTO[]> {
  */
 export async function getLatestUpdates(page: number = 0, size: number = 20): Promise<PagedResponseDTO<MangaSummaryDTO>> {
   const url = `${API_BASE_URL}/manga/latest-updated?page=${page}&size=${size}`;
-  return cachedFetch<PagedResponseDTO<MangaSummaryDTO>>(url, { skipCache: true, cacheTtl: CACHE_TTL.LISTING });
+  // Skip cache for page 0 to always get fresh data, cache subsequent pages
+  return cachedFetch<PagedResponseDTO<MangaSummaryDTO>>(url, { skipCache: page === 0, cacheTtl: CACHE_TTL.LISTING });
 }
 
 /**
@@ -312,8 +315,71 @@ export async function getReadingHistory(userId: string, limit: number = 10): Pro
 }
 
 // ============================================
+// Favorites API
+// ============================================
+
+export interface FavoriteDTO {
+  mangaId: string;
+  stt: number;
+  title: string;
+  coverImagePath: string;
+  author: string;
+  status: string;
+  views: number;
+  likes: number;
+  followers: number;
+  latestChapter: number | null;
+  latestChapterUpdatedAt: string | null;
+}
+
+/**
+ * Add manga to user's favorites
+ */
+export async function addFavorite(userId: string, mangaId: string): Promise<void> {
+  const url = `${API_BASE_URL}/user/${userId}/favorites/${mangaId}`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to add favorite: ${response.status}`);
+  }
+}
+
+/**
+ * Remove manga from user's favorites
+ */
+export async function removeFavorite(userId: string, mangaId: string): Promise<void> {
+  const url = `${API_BASE_URL}/user/${userId}/favorites/${mangaId}`;
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to remove favorite: ${response.status}`);
+  }
+}
+
+/**
+ * Check if manga is in user's favorites
+ */
+export async function checkFavorite(userId: string, mangaId: string): Promise<boolean> {
+  const url = `${API_BASE_URL}/user/${userId}/favorites/${mangaId}/check`;
+  return cachedFetch<boolean>(url, { skipCache: true });
+}
+
+/**
+ * Get user's favorite manga list
+ */
+export async function getFavorites(userId: string, page: number = 0, size: number = 20): Promise<PagedResponseDTO<FavoriteDTO>> {
+  const url = `${API_BASE_URL}/user/${userId}/favorites?page=${page}&size=${size}`;
+  return cachedFetch<PagedResponseDTO<FavoriteDTO>>(url, { cacheTtl: CACHE_TTL.LISTING });
+}
+
+// ============================================
 // Image URL Helper
 // ============================================
+
 
 /**
  * Get cover image URL

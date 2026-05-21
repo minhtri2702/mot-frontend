@@ -5,8 +5,9 @@ import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { ChevronLeft, ChevronRight, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChapterReaderSkeleton } from "@/components/manga-card-skeleton";
-import { getChapterDetail } from "@/lib/api";
-import type { ChapterDetailDTO } from "@/lib/api";
+import { getChapterDetail, getMangaDetail } from "@/lib/api";
+import type { ChapterDetailDTO, MangaDetailDTO } from "@/lib/api";
+import { saveReadingHistory } from "@/lib/reading-history";
 
 type ReadingMode = "scroll" | "page";
 
@@ -30,8 +31,8 @@ const LazyChapterImage = memo(function LazyChapterImage({
     const el = imgRef.current;
     if (!el) return;
 
-    // Preload first 3 images immediately
-    if (index < 3) {
+    // Preload first 5 images immediately
+    if (index < 5) {
       setIsVisible(true);
       return;
     }
@@ -166,13 +167,29 @@ export default function ChapterReaderPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [chapter, loading, id, readingMode]);
 
-  // Fetch data
+  // Fetch data + save reading history
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
       try {
-        const data = await getChapterDetail(id, parseInt(chapterId));
-        setChapter(data);
+        const [chapterData, mangaData] = await Promise.all([
+          getChapterDetail(id, parseInt(chapterId)),
+          getMangaDetail(id),
+        ]);
+        setChapter(chapterData);
+
+        // Auto-save reading history to localStorage (no login required)
+        const chapterTitle = chapterData.chapterName || `Chương ${chapterData.chapterNumber}`;
+        await saveReadingHistory({
+          mangaId: chapterData.mangaId || id,
+          mangaTitle: mangaData.title || chapterData.mangaTitle || id,
+          coverImagePath: mangaData.coverImagePath || "",
+          stt: mangaData.stt || 0,
+          chapterId: chapterData.id,
+          chapterNumber: chapterData.chapterNumber,
+          chapterName: chapterTitle,
+          lastReadDate: new Date().toISOString(),
+        });
       } catch (error) {
         console.error("Failed to load chapter:", error);
       } finally {
@@ -213,7 +230,7 @@ export default function ChapterReaderPage() {
             </Link>
             <div>
               <Link href={`/truyen/${id}`} className="text-sm font-medium hover:text-primary transition-colors">
-                {id.slice(0, 8)}...
+                {chapter.mangaTitle || id.slice(0, 8) + "..."}
               </Link>
               <p className="text-xs text-muted-foreground">{chapterTitle}</p>
             </div>
@@ -287,7 +304,7 @@ export default function ChapterReaderPage() {
         className={readingMode === "scroll" ? "overflow-y-auto" : ""}
         style={readingMode === "scroll" ? { height: "calc(100vh - 57px)" } : {}}
       >
-        <div ref={contentRef} className="max-w-4xl mx-auto">
+        <div ref={contentRef} className="max-w-4xl mx-auto px-4 sm:px-6">
           {readingMode === "scroll" ? (
             chapter.imageUrls.length > 0 ? (
               chapter.imageUrls.map((imageUrl, index) => (

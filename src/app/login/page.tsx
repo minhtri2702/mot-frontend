@@ -137,6 +137,35 @@ export default function LoginPage() {
                   Đang xử lý...
                 </div>
               )}
+              <div className="relative w-full my-2">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Hoặc</span>
+                </div>
+              </div>
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={async () => {
+                  try {
+                    setIsLoading(true);
+                    const result = await loginWithEmail("test", "test123");
+                    login(result.token, result.user);
+                    toast.success("Đăng nhập thử thành công!");
+                    router.push("/");
+                  } catch (error) {
+                    toast.error("Đăng nhập thử thất bại");
+                    console.error("Test login error:", error);
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+                disabled={isLoading}
+              >
+                Đăng nhập thử (Test)
+              </Button>
             </TabsContent>
 
             <TabsContent value="email">

@@ -119,9 +119,11 @@ function UserMenu() {
           <Settings className="h-4 w-4 mr-2" />
           Cài đặt tài khoản
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Heart className="h-4 w-4 mr-2" />
-          Truyện yêu thích
+        <DropdownMenuItem asChild>
+          <Link href="/truyen-yeu-thich">
+            <Heart className="h-4 w-4 mr-2" />
+            Truyện yêu thích
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
           <Clock className="h-4 w-4 mr-2" />
@@ -308,7 +310,7 @@ export default function Header() {
         {/* Search and User */}
         <div className="flex items-center space-x-1">
           {/* Desktop Search */}
-          <div className="hidden md:block relative w-full max-w-[200px] lg:max-w-[300px]">
+          <div className="hidden md:block relative w-full max-w-[280px] lg:max-w-[400px]">
             <button
               onClick={() => {
                 // Trigger search dialog via keyboard event simulation
@@ -337,9 +339,11 @@ export default function Header() {
             <Button variant="ghost" size="icon" title="Lịch sử đọc truyện">
               <Clock className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" title="Truyện yêu thích" className="hidden sm:inline-flex">
-              <Heart className="h-5 w-5" />
-            </Button>
+            <Link href="/truyen-yeu-thich">
+              <Button variant="ghost" size="icon" title="Truyện yêu thích" className="hidden sm:inline-flex">
+                <Heart className="h-5 w-5" />
+              </Button>
+            </Link>
             <Button variant="ghost" size="icon" title="Bảng xếp hạng" className="hidden sm:inline-flex">
               <BarChart className="h-5 w-5" />
             </Button>

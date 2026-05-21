@@ -17,10 +17,12 @@ interface MangaCardProps {
 const MangaCard = memo(function MangaCard({ manga, showBadge = "none" }: MangaCardProps) {
   return (
     <Link href={`/truyen/${manga.id}`} className="group">
-      <div className="relative mb-2 aspect-[2/3] overflow-hidden rounded-md shadow">
+      <div className="relative mb-2 aspect-[2/3] overflow-hidden rounded-md shadow bg-muted">
         <img
           src={manga.cover}
           alt={manga.title}
+          width="300"
+          height="450"
           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="eager"
           onError={(e) => { e.currentTarget.src = "/placeholder-cover.svg"; }}

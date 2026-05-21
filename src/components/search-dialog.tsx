@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Search, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
 import { searchManga, getCoverImageUrl } from "@/lib/api";
 import type { MangaSummaryDTO } from "@/lib/api";
 
@@ -14,6 +13,9 @@ interface SearchResult {
   title: string;
   cover: string;
   chapter?: number | null;
+  author?: string;
+  views?: number;
+  genres?: string[];
 }
 
 // Memoized search result item
@@ -34,21 +36,31 @@ const SearchResultItem = memo(function SearchResultItem({
         isSelected ? "bg-muted" : ""
       }`}
     >
-      <div className="relative w-10 h-14 rounded overflow-hidden shrink-0">
-        <Image
+      <div className="relative w-10 h-14 rounded overflow-hidden shrink-0 bg-muted">
+        <img
           src={getCoverImageUrl(item.cover)}
           alt={item.title}
-          fill
-          sizes="40px"
-          style={{ objectFit: "cover" }}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = "/placeholder-cover.svg";
+          }}
         />
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm truncate">{item.title}</p>
-        {item.chapter && (
-          <p className="text-xs text-muted-foreground">
-            Chapter {item.chapter}
-          </p>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {item.author && <span className="truncate max-w-[120px]">{item.author}</span>}
+          {item.chapter && <span>• Chương {item.chapter}</span>}
+          {item.views && item.views > 0 && <span>• {item.views >= 1000 ? `${(item.views / 1000).toFixed(1)}K` : item.views} lượt xem</span>}
+        </div>
+        {item.genres && item.genres.length > 0 && (
+          <div className="flex gap-1 mt-0.5">
+            {item.genres.slice(0, 3).map((g) => (
+              <span key={g} className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                {g}
+              </span>
+            ))}
+          </div>
         )}
       </div>
     </Link>
@@ -124,6 +136,9 @@ export default function SearchDialog() {
             title: m.title,
             cover: m.coverImagePath,
             chapter: m.latestChapter,
+            author: m.author,
+            views: m.views,
+            genres: m.genres,
           }))
         );
         setSelectedIndex(-1);
@@ -232,6 +247,14 @@ export default function SearchDialog() {
                   onSelect={closeDialog}
                 />
               ))}
+              {/* Xem tất cả kết quả */}
+              <Link
+                href={`/tim-kiem?q=${encodeURIComponent(query)}`}
+                onClick={closeDialog}
+                className="flex items-center justify-center gap-1 px-4 py-2.5 text-sm text-primary hover:bg-muted/50 transition-colors border-t mt-1"
+              >
+                Xem tất cả kết quả cho &ldquo;{query}&rdquo;
+              </Link>
             </div>
           ) : !query.trim() ? (
             <div className="px-4 py-3">

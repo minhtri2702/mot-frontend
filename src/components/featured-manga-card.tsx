@@ -14,17 +14,16 @@ interface FeaturedMangaCardProps {
 export default function FeaturedMangaCard({ manga, isFirst }: FeaturedMangaCardProps) {
   return (
     <Card className="overflow-hidden border-0 shadow-lg">
-      <CardContent className="p-0 relative aspect-[2/1] md:aspect-[2/1.2]">
+      <CardContent className="p-0 relative aspect-[4/3] md:aspect-[3/2] bg-muted">
         <Link href={`/truyen/${manga.id}`}>
           <img
             src={manga.cover}
             alt={manga.title}
-            width="800"
+            width="600"
             height="400"
             loading="eager"
             fetchPriority={isFirst ? "high" : "auto"}
-            style={{ objectFit: "cover", width: "100%", height: "100%" }}
-            className="absolute inset-0 hover:opacity-90 transition-opacity"
+            className="absolute inset-0 w-full h-full object-cover hover:opacity-90 transition-opacity"
             onError={(e) => { e.currentTarget.src = "/placeholder-cover.svg"; }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>

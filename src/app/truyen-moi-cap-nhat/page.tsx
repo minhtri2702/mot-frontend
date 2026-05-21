@@ -32,13 +32,14 @@ export default function LatestUpdatesPage() {
   const pageRef = useRef(0);
   const loadingMoreRef = useRef(false);
   const hasMoreRef = useRef(true);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   // Initial load
   useEffect(() => {
     async function loadInitial() {
       setLoading(true);
       try {
-        const data = await getLatestUpdates(0, 10);
+        const data = await getLatestUpdates(0, 12);
         setItems(data.content.map(toCardData));
         pageRef.current = 0;
         hasMoreRef.current = !data.last;
@@ -52,14 +53,14 @@ export default function LatestUpdatesPage() {
     loadInitial();
   }, []);
 
-  // Load more pages - uses refs to avoid stale closure
+  // Load more pages
   const loadMore = useCallback(async () => {
     if (loadingMoreRef.current || !hasMoreRef.current) return;
     loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
       const nextPage = pageRef.current + 1;
-      const data = await getLatestUpdates(nextPage, 10);
+      const data = await getLatestUpdates(nextPage, 12);
       const newItems = data.content.map(toCardData);
       if (newItems.length === 0) {
         hasMoreRef.current = false;
@@ -76,25 +77,35 @@ export default function LatestUpdatesPage() {
       loadingMoreRef.current = false;
       setLoadingMore(false);
     }
-  }, []); // No dependencies - all state via refs
+  }, []);
 
-  // Intersection Observer for infinite scroll
+  // Observe sentinel when it appears in DOM
   useEffect(() => {
+    // Create observer once
+    if (!observerRef.current) {
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasMoreRef.current && !loadingMoreRef.current) {
+            loadMore();
+          }
+        },
+        { rootMargin: "200px", threshold: 0 }
+      );
+    }
+
+    const observer = observerRef.current;
     const sentinel = sentinelRef.current;
-    if (!sentinel) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMoreRef.current && !loadingMoreRef.current) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
+    if (sentinel) {
+      observer.observe(sentinel);
+    }
 
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [loadMore]); // Only depends on loadMore (which is stable now)
+    return () => {
+      if (sentinel) {
+        observer.unobserve(sentinel);
+      }
+    };
+  });
 
   return (
     <div className="container py-8 space-y-10">
