@@ -82,7 +82,7 @@ function UserMenu() {
     );
   }
 
-  const initials = user.username
+  const initials = (user.username || "")
     .split(" ")
     .map((n) => n[0])
     .join("")

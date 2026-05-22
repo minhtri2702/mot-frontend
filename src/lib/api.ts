@@ -34,7 +34,7 @@ export function formatRelativeTime(dateStr: string | null | undefined): string {
 // API Configuration
 // ============================================
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api/v1";
 
 // Cache TTLs
 const CACHE_TTL = {
@@ -398,4 +398,121 @@ export function prefetchMangaDetail(id: string): void {
   cachedFetch(url, { cacheTtl: CACHE_TTL.DETAIL }).catch(() => {
     // Silent fail for prefetch
   });
+}
+
+// ============================================
+// Comment Types
+// ============================================
+
+export interface CommentDTO {
+  id: string;
+  mangaId: string;
+  userId: string;
+  username: string;
+  avatarUrl?: string;
+  parentCommentId: string | null;
+  content: string;
+  likeCount: number;
+  replyCount: number;
+  isLiked: boolean;
+  createdAt: string;
+  updatedAt: string;
+  replies?: CommentDTO[];
+}
+
+export interface CommentRequest {
+  content: string;
+  parentCommentId?: string;
+}
+
+// ============================================
+// Comment API
+// ============================================
+
+/**
+ * Get comments for a manga
+ */
+export async function getComments(
+  mangaId: string,
+  page: number = 0,
+  size: number = 20,
+  userId?: string
+): Promise<PagedResponseDTO<CommentDTO>> {
+  const params = new URLSearchParams({ page: page.toString(), size: size.toString() });
+  const url = `${API_BASE_URL}/manga/${mangaId}/comments?${params}`;
+  const headers: Record<string, string> = {};
+  if (userId) headers["X-User-Id"] = userId;
+  return cachedFetch<PagedResponseDTO<CommentDTO>>(url, { headers, cacheTtl: 30 * 1000 });
+}
+
+/**
+ * Add a comment to a manga
+ */
+export async function addComment(
+  mangaId: string,
+  request: CommentRequest,
+  userId: string,
+  username: string,
+  avatarUrl?: string
+): Promise<CommentDTO> {
+  const url = `${API_BASE_URL}/manga/${mangaId}/comments`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-User-Id": userId,
+      "X-User-Name": username,
+      ...(avatarUrl ? { "X-User-Avatar": avatarUrl } : {}),
+    },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) throw new Error(`Failed to add comment: ${response.status}`);
+  const json = await response.json();
+  return json.data;
+}
+
+/**
+ * Update a comment
+ */
+export async function updateComment(
+  commentId: string,
+  content: string,
+  userId: string
+): Promise<CommentDTO> {
+  const url = `${API_BASE_URL}/comments/${commentId}`;
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "X-User-Id": userId,
+    },
+    body: JSON.stringify({ content }),
+  });
+  if (!response.ok) throw new Error(`Failed to update comment: ${response.status}`);
+  const json = await response.json();
+  return json.data;
+}
+
+/**
+ * Delete a comment
+ */
+export async function deleteComment(commentId: string, userId: string): Promise<void> {
+  const url = `${API_BASE_URL}/comments/${commentId}`;
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: { "X-User-Id": userId },
+  });
+  if (!response.ok) throw new Error(`Failed to delete comment: ${response.status}`);
+}
+
+/**
+ * Toggle like on a comment
+ */
+export async function toggleLikeComment(commentId: string, userId: string): Promise<void> {
+  const url = `${API_BASE_URL}/comments/${commentId}/like`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "X-User-Id": userId },
+  });
+  if (!response.ok) throw new Error(`Failed to toggle like: ${response.status}`);
 }

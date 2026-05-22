@@ -414,6 +414,21 @@ export default function Home() {
             </div>
           )}
 
+          {/* Truyện đang theo dõi */}
+          <div className="rounded-xl border bg-card p-4">
+            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+              <Heart className="h-4 w-4 text-red-500" />
+              Truyện đang theo dõi
+            </h3>
+            {isAuthenticated && user ? (
+              <FavoritesSidebar userId={user.id} />
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                <Link href="/login" className="text-primary hover:underline">Đăng nhập</Link> để theo dõi truyện
+              </p>
+            )}
+          </div>
+
           {/* Thể Loại */}
           {genres.length > 0 && (
             <div className="rounded-xl border bg-card p-4">
@@ -437,21 +452,6 @@ export default function Home() {
               </div>
             </div>
           )}
-
-          {/* Truyện đang theo dõi */}
-          <div className="rounded-xl border bg-card p-4">
-            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-              <Heart className="h-4 w-4 text-red-500" />
-              Truyện đang theo dõi
-            </h3>
-            {isAuthenticated && user ? (
-              <FavoritesSidebar userId={user.id} />
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                <Link href="/login" className="text-primary hover:underline">Đăng nhập</Link> để theo dõi truyện
-              </p>
-            )}
-          </div>
         </aside>
       </div>
     </div>

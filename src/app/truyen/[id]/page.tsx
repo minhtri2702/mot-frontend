@@ -9,6 +9,7 @@ import MangaCard from "@/components/manga-card";
 import { MangaDetailSkeleton } from "@/components/manga-card-skeleton";
 import { getMangaDetail, getFavorites, getRelatedManga, formatNumber, formatRelativeTime, getCoverImageUrl } from "@/lib/api";
 import FavoriteButton from "@/components/favorite-button";
+import CommentSection from "@/components/comment-section";
 import { useAuth } from "@/lib/auth";
 import type { MangaDetailDTO, FavoriteDTO, MangaSummaryDTO } from "@/lib/api";
 import type { MangaCardData } from "@/lib/types";
@@ -113,14 +114,20 @@ export default function MangaDetailPage() {
         <div className="flex-1 space-y-8 min-w-0">
           {/* Manga Detail Header */}
           <div className="flex flex-col md:flex-row gap-8">
-            {/* Cover Image - use img instead of Image for faster LCP */}
+            {/* Cover Image - optimized for LCP */}
             <div className="w-full md:w-64 flex-shrink-0">
-              <div className="aspect-[3/4] rounded-lg overflow-hidden shadow-lg relative bg-muted">
+              <div className="aspect-[3/4] rounded-lg overflow-hidden shadow-lg relative bg-muted" style={{ minHeight: '256px' }}>
+                {/* Preload hint for LCP image */}
+                <link rel="preload" as="image" href={getCoverImageUrl(manga.coverImagePath)} />
                 <img
                   src={getCoverImageUrl(manga.coverImagePath)}
                   alt={manga.title}
                   className="absolute inset-0 w-full h-full object-cover"
                   fetchPriority="high"
+                  loading="eager"
+                  decoding="async"
+                  width="256"
+                  height="341"
                   onError={(e) => { e.currentTarget.src = "/placeholder-cover.svg"; }}
                 />
               </div>
@@ -258,6 +265,9 @@ export default function MangaDetailPage() {
               </div>
             </section>
           )}
+
+          {/* Comments Section */}
+          <CommentSection mangaId={id} />
         </div>
 
         {/* Sidebar */}
