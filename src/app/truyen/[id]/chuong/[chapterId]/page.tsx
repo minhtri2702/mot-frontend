@@ -12,64 +12,28 @@ import { saveReadingHistory } from "@/lib/reading-history";
 type ReadingMode = "scroll" | "page";
 
 // ============================================
-// Lazy Image Component with IntersectionObserver
+// Chapter Image Component - loads all images immediately
 // ============================================
-const LazyChapterImage = memo(function LazyChapterImage({
+const ChapterImage = memo(function ChapterImage({
   src,
   alt,
-  index,
 }: {
   src: string;
   alt: string;
-  index: number;
 }) {
-  const imgRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  useEffect(() => {
-    const el = imgRef.current;
-    if (!el) return;
-
-    // Preload first 5 images immediately
-    if (index < 5) {
-      setIsVisible(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [index]);
-
   return (
-    <div
-      ref={imgRef}
-      className="w-full"
-      style={{ minHeight: isVisible ? "auto" : "300px" }}
-    >
-      {isVisible && (
-        <div
-          className={`transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
-        >
-          <img
-            src={src}
-            alt={alt}
-            className="w-full h-auto"
-            loading={index < 3 ? "eager" : "lazy"}
-            onLoad={() => setIsLoaded(true)}
-          />
-        </div>
-      )}
+    <div className="w-full">
+      {!isLoaded && <div className="w-full aspect-[3/4] bg-muted animate-pulse" />}
+      <div className={`${isLoaded ? "block" : "hidden"}`}>
+        <img
+          src={src}
+          alt={alt}
+          className="w-full h-auto"
+          onLoad={() => setIsLoaded(true)}
+        />
+      </div>
     </div>
   );
 });
@@ -308,11 +272,10 @@ export default function ChapterReaderPage() {
           {readingMode === "scroll" ? (
             chapter.imageUrls.length > 0 ? (
               chapter.imageUrls.map((imageUrl, index) => (
-                <LazyChapterImage
+                <ChapterImage
                   key={index}
                   src={imageUrl}
                   alt={`${chapterTitle} - Trang ${index + 1}`}
-                  index={index}
                 />
               ))
             ) : (

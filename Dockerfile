@@ -1,20 +1,33 @@
-# Sử dụng image Node.js 18 chính thức
-FROM node:18-alpine
+# frontend/Dockerfile
+FROM node:20-alpine AS builder
 
-# Thiết lập thư mục làm việc
 WORKDIR /app
 
-# Copy package.json và package-lock.json
 COPY package*.json ./
+RUN npm ci
 
-# Cài đặt dependencies
-RUN npm install
-
-# Copy mã nguồn
 COPY . .
 
-# Mở cổng ứng dụng (thay 3000 bằng cổng của bạn)
+# === QUAN TRỌNG: Truyền biến lúc build ===
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_AUTH_API_URL
+
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_AUTH_API_URL=${NEXT_PUBLIC_AUTH_API_URL}
+
+RUN npm run build
+
+# Production stage
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+
 EXPOSE 3000
 
-# Lệnh khởi động ứng dụng
-CMD ["npm","run" ,"dev"]
+CMD ["npm", "start"]
