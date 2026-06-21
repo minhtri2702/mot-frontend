@@ -76,7 +76,7 @@ export default function Footer() {
               <li className="flex items-center">
                 <Mail className="h-4 w-4 mr-2" />
                 <a href="mailto:contact@goctruyentranhvui.com" className="text-sm hover:text-primary">
-                  contact@goctruyentranhvui.com
+                  contact@mottruyen.com
                 </a>
               </li>
               <li className="flex items-center">
