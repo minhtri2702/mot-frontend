@@ -9,7 +9,7 @@ export default function Footer() {
           <div className="space-y-3">
             <div className="flex items-center">
               <BookOpen className="h-6 w-6 text-primary mr-2" />
-              <span className="font-bold text-xl">Góc Truyện Tranh Vui</span>
+              <span className="font-bold text-xl">Mọt truyện tranh</span>
             </div>
             <p className="text-sm text-muted-foreground">
               Website đọc truyện tranh online, cập nhật nhanh nhất các truyện tranh hot, nhiều thể loại đa dạng.
@@ -75,7 +75,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li className="flex items-center">
                 <Mail className="h-4 w-4 mr-2" />
-                <a href="mailto:contact@goctruyentranhvui.com" className="text-sm hover:text-primary">
+                <a href="mailto:contact@mottruyentranh.com" className="text-sm hover:text-primary">
                   contact@mottruyen.com
                 </a>
               </li>
@@ -90,7 +90,7 @@ export default function Footer() {
         </div>
         <div className="mt-8 border-t pt-6">
           <p className="text-center text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Góc Truyện Tranh Vui. Tất cả nội dung trên website đều được sưu tầm từ Internet.
+            &copy; {new Date().getFullYear()} Mọt truyện tranh. Tất cả nội dung trên website đều được sưu tầm từ Internet.
             <br />
             Website không lưu trữ bất kỳ tệp tin nào trên máy chủ của mình.
           </p>
