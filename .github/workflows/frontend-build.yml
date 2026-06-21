@@ -3,7 +3,7 @@ name: Build Frontend Docker
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build-and-push:
@@ -24,6 +24,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
 
       - name: Build Docker image
         run: |
