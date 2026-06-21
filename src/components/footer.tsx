@@ -75,7 +75,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li className="flex items-center">
                 <Mail className="h-4 w-4 mr-2" />
-                <a href="mailto:contact@mottruyentranh.com" className="text-sm hover:text-primary">
+                <a href="mailto:contact@mottruyen.com" className="text-sm hover:text-primary">
                   contact@mottruyen.com
                 </a>
               </li>
