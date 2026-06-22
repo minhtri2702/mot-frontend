@@ -1,13 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { useState, useEffect, useCallback } from "react";
 import { TrendingUp, Clock, Flame, Tag, Eye, ChevronRight, History, Heart } from "lucide-react";
 import FeaturedMangaCard from "@/components/featured-manga-card";
 import MangaCard from "@/components/manga-card";
@@ -221,6 +214,7 @@ function FavoritesSidebar({ userId }: { userId: string }) {
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
+  const [heroIndex, setHeroIndex] = useState(0);
 
   const { data: featuredRes = [], isPending: featuredLoading } = useFeaturedManga();
   const { data: latestRes, isPending: latestLoading } = useLatestUpdates();
@@ -251,6 +245,25 @@ export default function Home() {
     .slice(0, 5)
     .map(toCardData);
 
+  // Hero navigation
+  const heroSlides = featuredManga.slice(0, 5);
+  const currentHero = heroSlides[heroIndex] || heroSlides[0];
+
+  const prevHero = useCallback(() => {
+    setHeroIndex((prev) => (prev === 0 ? heroSlides.length - 1 : prev - 1));
+  }, [heroSlides.length]);
+
+  const nextHero = useCallback(() => {
+    setHeroIndex((prev) => (prev === heroSlides.length - 1 ? 0 : prev + 1));
+  }, [heroSlides.length]);
+
+  // Auto-slide every 5 seconds
+  useEffect(() => {
+    if (heroSlides.length <= 1) return;
+    const interval = setInterval(nextHero, 5000);
+    return () => clearInterval(interval);
+  }, [nextHero, heroSlides.length]);
+
   if (isLoading) {
     return (
       <div className="container py-8 space-y-10">
@@ -268,36 +281,31 @@ export default function Home() {
   }
 
   return (
-    <div className="container py-6 space-y-8">
-      {/* ===== HERO CAROUSEL ===== */}
-      {featuredManga.length > 0 && (
-        <section className="relative">
-          <Carousel className="w-full" opts={{ loop: true, align: "start" }}>
-            <CarouselContent>
-              {featuredManga.slice(0, 5).map((manga, index) => (
-                <CarouselItem key={manga.id} className="md:basis-1/2 lg:basis-1/3">
-                  <div className="p-1">
-                    <FeaturedMangaCard manga={manga} isFirst={index === 0} />
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious className="left-2" />
-            <CarouselNext className="right-2" />
-          </Carousel>
+    <div className="container py-8 space-y-10">
+      {/* ===== HERO BANNER - Full width ===== */}
+      {currentHero && (
+        <section>
+          <FeaturedMangaCard
+            manga={currentHero}
+            isFirst={heroIndex === 0}
+            onPrev={prevHero}
+            onNext={nextHero}
+            currentIndex={heroIndex}
+            totalSlides={heroSlides.length}
+          />
         </section>
       )}
 
-      {/* ===== LAYOUT 2 CỘT ===== */}
+      {/* ===== TWO-COLUMN LAYOUT: Main + Sidebar ===== */}
       <div className="flex flex-col lg:flex-row gap-8">
 
         {/* ===== MAIN CONTENT (LEFT) ===== */}
         <div className="flex-1 min-w-0 space-y-10">
 
-          {/* Mới Cập Nhật */}
+          {/* ===== Mới Cập Nhật ===== */}
           <section>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
                 <Clock className="h-5 w-5 text-primary" />
                 Mới Cập Nhật
               </h2>
@@ -305,36 +313,36 @@ export default function Home() {
                 Xem tất cả <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-              {latestUpdates.slice(0, 10).map((manga) => (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
+              {latestUpdates.slice(0, 12).map((manga) => (
                 <MangaCard key={manga.id} manga={manga} showBadge="time" />
               ))}
             </div>
           </section>
 
-          {/* Xu Hướng */}
+          {/* ===== Xu Hướng ===== */}
           <section>
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-5">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                <h2 className="text-2xl font-bold">Xu Hướng</h2>
+                <h2 className="text-xl md:text-2xl font-bold">Xu Hướng</h2>
               </div>
               <Link href="/truyen-hot" className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
                 Xem tất cả <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-              {trendingManga.slice(0, 10).map((manga) => (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
+              {trendingManga.slice(0, 12).map((manga) => (
                 <MangaCard key={manga.id} manga={manga} showBadge="views" />
               ))}
             </div>
           </section>
 
-          {/* Truyện Hoàn Thành */}
+          {/* ===== Truyện Hoàn Thành ===== */}
           {trendingManga.filter(m => m.status === "Hoàn thành").length > 0 && (
             <section>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
+              <div className="flex justify-between items-center mb-5">
+                <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
                   <Flame className="h-5 w-5 text-orange-500" />
                   Truyện Hoàn Thành
                 </h2>
@@ -342,8 +350,8 @@ export default function Home() {
                   Xem tất cả <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-                {trendingManga.filter(m => m.status === "Hoàn thành").slice(0, 10).map((manga) => (
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
+                {trendingManga.filter(m => m.status === "Hoàn thành").slice(0, 12).map((manga) => (
                   <MangaCard key={manga.id} manga={manga} showBadge="rating" />
                 ))}
               </div>
@@ -352,22 +360,22 @@ export default function Home() {
         </div>
 
         {/* ===== SIDEBAR (RIGHT) ===== */}
-        <aside className="w-full lg:w-80 shrink-0 space-y-6">
+        <aside className="w-full lg:w-72 shrink-0 space-y-4 lg:sticky lg:top-24 lg:self-start">
           {/* Top Views Ranking */}
           {topViews.length > 0 && (
-            <div className="rounded-xl border bg-card p-4">
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                <Eye className="h-4 w-4 text-primary" />
+            <div className="rounded-lg border bg-card/80 backdrop-blur-sm p-3">
+              <h3 className="font-semibold text-sm mb-2 flex items-center gap-1.5">
+                <Eye className="h-3.5 w-3.5 text-primary" />
                 Top Lượt Xem
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {topViews.map((manga, index) => (
                   <Link
                     key={manga.id}
                     href={`/truyen/${manga.id}`}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
+                    className="flex items-center gap-2 p-1.5 rounded-md hover:bg-muted/50 transition-colors group"
                   >
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
                       index === 0 ? "bg-yellow-500 text-white" :
                       index === 1 ? "bg-gray-400 text-white" :
                       index === 2 ? "bg-amber-700 text-white" :
@@ -376,10 +384,10 @@ export default function Home() {
                       {index + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                      <p className="text-xs font-medium truncate group-hover:text-primary transition-colors">
                         {manga.title}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[10px] text-muted-foreground">
                         {formatNumber(manga.views)} lượt xem
                       </p>
                     </div>
@@ -389,41 +397,35 @@ export default function Home() {
             </div>
           )}
 
-          {/* Lịch Sử Đọc Truyện (từ localStorage, không cần login) */}
-          {localHistory.length > 0 ? (
-            <div className="rounded-xl border bg-card p-4">
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                <History className="h-4 w-4 text-primary" />
-                Lịch Sử Đọc
-              </h3>
-              <div className="space-y-2">
-                {localHistory.slice(0, 10).map((item) => (
+          {/* Lịch Sử Đọc Truyện */}
+          <div className="rounded-lg border bg-card/80 backdrop-blur-sm p-3">
+            <h3 className="font-semibold text-sm mb-2 flex items-center gap-1.5">
+              <History className="h-3.5 w-3.5 text-primary" />
+              Lịch Sử Đọc
+            </h3>
+            {localHistory.length > 0 ? (
+              <div className="space-y-1">
+                {localHistory.slice(0, 5).map((item) => (
                   <ReadingHistoryItem key={`${item.mangaId}-${item.chapterId}`} item={item} onRemove={removeFromHistory} />
                 ))}
               </div>
-            </div>
-          ) : (
-            <div className="rounded-xl border bg-card p-4">
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                <History className="h-4 w-4 text-primary" />
-                Lịch Sử Đọc
-              </h3>
-              <p className="text-sm text-muted-foreground text-center py-4">
+            ) : (
+              <p className="text-xs text-muted-foreground text-center py-3">
                 Bạn chưa đọc truyện nào
               </p>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Truyện đang theo dõi */}
-          <div className="rounded-xl border bg-card p-4">
-            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-              <Heart className="h-4 w-4 text-red-500" />
+          <div className="rounded-lg border bg-card/80 backdrop-blur-sm p-3">
+            <h3 className="font-semibold text-sm mb-2 flex items-center gap-1.5">
+              <Heart className="h-3.5 w-3.5 text-red-500" />
               Truyện đang theo dõi
             </h3>
             {isAuthenticated && user ? (
               <FavoritesSidebar userId={user.id} />
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-4">
+              <p className="text-xs text-muted-foreground text-center py-3">
                 <Link href="/login" className="text-primary hover:underline">Đăng nhập</Link> để theo dõi truyện
               </p>
             )}
@@ -431,21 +433,21 @@ export default function Home() {
 
           {/* Thể Loại */}
           {genres.length > 0 && (
-            <div className="rounded-xl border bg-card p-4">
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                <Tag className="h-4 w-4 text-primary" />
+            <div className="rounded-lg border bg-card/80 backdrop-blur-sm p-3">
+              <h3 className="font-semibold text-sm mb-2 flex items-center gap-1.5">
+                <Tag className="h-3.5 w-3.5 text-primary" />
                 Thể Loại
               </h3>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1">
                 {genres.slice(0, 12).map((genre) => (
                   <Link key={genre.id} href={`/the-loai/${genre.slug}`}>
-                    <Badge variant="secondary" className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors text-xs">
+                    <Badge variant="secondary" className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors text-[10px] px-1.5 py-0">
                       {genre.name}
                     </Badge>
                   </Link>
                 ))}
                 <Link href="/the-loai">
-                  <Badge variant="outline" className="cursor-pointer text-xs">
+                  <Badge variant="outline" className="cursor-pointer text-[10px] px-1.5 py-0">
                     Xem thêm...
                   </Badge>
                 </Link>

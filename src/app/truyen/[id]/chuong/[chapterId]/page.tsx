@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, useEffect, useRef, useCallback, memo } from "react";
-import { ChevronLeft, ChevronRight, Sun, Moon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sun, Moon, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChapterReaderSkeleton } from "@/components/manga-card-skeleton";
 import { getChapterDetail, getMangaDetail } from "@/lib/api";
@@ -10,6 +10,59 @@ import type { ChapterDetailDTO, MangaDetailDTO } from "@/lib/api";
 import { saveReadingHistory } from "@/lib/reading-history";
 
 type ReadingMode = "scroll" | "page";
+
+// ============================================
+// Custom hook: hide header on scroll down, show on scroll up
+// Uses a callback ref pattern to attach to the scrollable element
+// ============================================
+function useHideOnScroll(threshold = 10) {
+  const [isHidden, setIsHidden] = useState(false);
+  const lastScrollY = useRef(0);
+  const scrollElRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollRefCallback = useCallback((node: HTMLDivElement | null) => {
+    // Clean up old listener
+    if (scrollElRef.current) {
+      scrollElRef.current.removeEventListener("scroll", handleScroll);
+    }
+
+    scrollElRef.current = node;
+
+    // Attach new listener
+    if (node) {
+      node.addEventListener("scroll", handleScroll, { passive: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleScroll = useCallback(() => {
+    const el = scrollElRef.current;
+    if (!el) return;
+
+    const currentScrollY = el.scrollTop;
+    const diff = currentScrollY - lastScrollY.current;
+
+    if (Math.abs(diff) < threshold) return;
+
+    if (diff > 0 && currentScrollY > 80) {
+      setIsHidden(true);
+    } else if (diff < 0) {
+      setIsHidden(false);
+    }
+
+    lastScrollY.current = currentScrollY;
+  }, [threshold]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollElRef.current) {
+        scrollElRef.current.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, [handleScroll]);
+
+  return { isHidden, scrollRefCallback };
+}
 
 // ============================================
 // Chapter Image Component - loads all images immediately
@@ -163,6 +216,9 @@ export default function ChapterReaderPage() {
     fetchData();
   }, [id, chapterId]);
 
+  // Auto-hide header on scroll down (must be before early returns)
+  const { isHidden: headerHidden, scrollRefCallback } = useHideOnScroll();
+
   if (loading) {
     return <ChapterReaderSkeleton />;
   }
@@ -185,8 +241,12 @@ export default function ChapterReaderPage() {
 
   return (
     <div className={`min-h-screen ${bgClass}`}>
-      {/* Top Navigation */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      {/* Top Navigation - auto hide on scroll down */}
+      <div
+        className={`sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b transition-transform duration-300 ${
+          headerHidden ? "-translate-y-full" : "translate-y-0"
+        }`}
+      >
         <div className="container flex items-center justify-between py-3">
           <div className="flex items-center gap-4">
             <Link href={`/truyen/${id}`} className="hover:text-primary transition-colors">
@@ -264,11 +324,15 @@ export default function ChapterReaderPage() {
 
       {/* Chapter Content */}
       <div
-        ref={scrollRef}
+        ref={(node) => {
+          // Combine both refs: scrollRef for internal use + scrollRefCallback for auto-hide
+          (scrollRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+          scrollRefCallback(node);
+        }}
         className={readingMode === "scroll" ? "overflow-y-auto" : ""}
         style={readingMode === "scroll" ? { height: "calc(100vh - 57px)" } : {}}
       >
-        <div ref={contentRef} className="max-w-4xl mx-auto px-4 sm:px-6">
+        <div ref={contentRef} className="max-w-4xl mx-auto px-4 sm:px-6 w-[73%]">
           {readingMode === "scroll" ? (
             chapter.imageUrls.length > 0 ? (
               chapter.imageUrls.map((imageUrl, index) => (

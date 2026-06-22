@@ -233,8 +233,8 @@ function MobileNav() {
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between py-4">
+    <header className="sticky top-0 z-50 w-full border-b border-white/[0.06] bg-[rgba(10,10,10,0.75)] backdrop-blur-[10px] supports-[backdrop-filter]:bg-[rgba(10,10,10,0.6)]">
+      <div className="container flex h-16 items-center justify-between">
         {/* Mobile Menu Button */}
         <MobileNav />
 

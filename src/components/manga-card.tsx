@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Star, Clock, Heart, Users } from "lucide-react";
+import { Eye, Star, Clock, Heart, Users, Play } from "lucide-react";
 import { getCoverImageUrl, formatNumber } from "@/lib/api";
 import type { MangaCardData } from "@/lib/types";
 
@@ -16,17 +16,27 @@ interface MangaCardProps {
  */
 const MangaCard = memo(function MangaCard({ manga, showBadge = "none" }: MangaCardProps) {
   return (
-    <Link href={`/truyen/${manga.id}`} className="group">
-      <div className="relative mb-2 aspect-[2/3] overflow-hidden rounded-md shadow bg-muted">
+    <Link href={`/truyen/${manga.id}`} className="group block">
+      <div className="relative mb-2 aspect-[2/3] overflow-hidden rounded-md shadow bg-muted transition-all duration-250 group-hover:-translate-y-[6px] group-hover:shadow-[0_8px_20px_rgba(255,50,50,0.12)] group-hover:border-red-500/30 border border-transparent">
         <img
-          src={manga.cover}
+          src={getCoverImageUrl(manga.cover)}
           alt={manga.title}
           width="300"
           height="450"
-          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          className="absolute inset-0 w-full h-full object-cover transition-all duration-250 group-hover:scale-[1.06]"
           loading="eager"
           onError={(e) => { e.currentTarget.src = "/placeholder-cover.svg"; }}
         />
+
+        {/* Dark overlay on hover */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+        {/* Quick action button on hover */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+          <div className="bg-[#EF4444] rounded-full p-3 shadow-lg shadow-[#EF4444]/30 hover:bg-[#DC2626] transition-colors">
+            <Play className="h-5 w-5 text-white fill-white" />
+          </div>
+        </div>
 
         {/* Badge - only render the active one */}
         {showBadge === "rating" && manga.likes != null && (
@@ -75,7 +85,7 @@ const MangaCard = memo(function MangaCard({ manga, showBadge = "none" }: MangaCa
         )}
       </div>
 
-      <h3 className="font-medium line-clamp-1 text-sm md:text-base">{manga.title}</h3>
+      <h3 className="font-medium line-clamp-1 text-sm md:text-base group-hover:text-primary transition-colors duration-300">{manga.title}</h3>
 
       {manga.chapter != null && (
         <p className="text-xs text-muted-foreground">Chapter {manga.chapter}</p>

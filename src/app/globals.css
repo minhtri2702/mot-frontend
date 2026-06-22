@@ -59,6 +59,14 @@
 }
 
 /* ============================================
+   SUBTLE GRADIENT BACKGROUND (respects theme)
+   ============================================ */
+html.dark body {
+  background: radial-gradient(circle at 50% 0%, #131313, #09090B);
+  background-attachment: fixed;
+}
+
+/* ============================================
    PERFORMANCE OPTIMIZATIONS
    ============================================ */
 
@@ -94,7 +102,6 @@ html {
 
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out forwards;
-  /* GPU acceleration */
   will-change: opacity, transform;
 }
 
@@ -117,6 +124,40 @@ html {
 .grid-fade-in > *:nth-child(10) { animation-delay: 360ms; }
 .grid-fade-in > *:nth-child(11) { animation-delay: 400ms; }
 .grid-fade-in > *:nth-child(12) { animation-delay: 440ms; }
+
+/* ============================================
+   HERO SLIDE-IN ANIMATION
+   ============================================ */
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.6s ease-out forwards;
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.5s ease-out forwards;
+}
 
 /* ============================================
    SKELETON LOADING ANIMATION
