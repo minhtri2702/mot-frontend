@@ -23,7 +23,7 @@ export default function FeaturedMangaCard({
   totalSlides = 1
 }: FeaturedMangaCardProps) {
   return (
-    <div className="relative w-full h-[380px] md:h-[400px] lg:h-[420px] overflow-hidden rounded-xl bg-muted group">
+    <div className="relative w-full h-[334px] md:h-[352px] lg:h-[370px] overflow-hidden rounded-xl bg-muted group">
       {/* Background Image */}
       <img
         src={getCoverImageUrl(manga.cover)}

@@ -281,10 +281,10 @@ export default function Home() {
   }
 
   return (
-    <div className="container py-8 space-y-10">
+    <div className="container py-4 space-y-6">
       {/* ===== HERO BANNER - Full width ===== */}
       {currentHero && (
-        <section>
+        <section className="max-w-[100%] max-h-[75%] mx-auto">
           <FeaturedMangaCard
             manga={currentHero}
             isFirst={heroIndex === 0}

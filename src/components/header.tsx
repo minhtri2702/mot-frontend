@@ -130,6 +130,13 @@ function UserMenu() {
           Lịch sử đọc
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/loi-ngo">
+            <BookOpen className="h-4 w-4 mr-2" />
+            Lời ngỏ
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
           <LogOut className="h-4 w-4 mr-2" />
           Đăng xuất
