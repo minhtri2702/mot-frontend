@@ -3,7 +3,7 @@ import { BookOpen, Mail, MessageSquare } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <footer className="glass-footer">
       <div className="container py-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div className="space-y-3">
