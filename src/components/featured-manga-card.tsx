@@ -85,7 +85,7 @@ export default function FeaturedMangaCard({
               <Eye className="h-3.5 w-3.5" />
               <span>{formatNumber(manga.views)}</span>
             </div>
-            <Badge className="bg-[#EF4444]/80 text-white border-0 text-[10px] font-semibold px-2.5 py-0.5">
+            <Badge className="bg-[#EF4444]/80 text-white border border-white/[0.15] text-[10px] font-semibold px-2.5 py-0.5 backdrop-blur-sm">
               {manga.latestChapter ? `Ch. ${manga.latestChapter}` : "Mới"}
             </Badge>
           </div>

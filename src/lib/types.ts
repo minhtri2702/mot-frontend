@@ -127,6 +127,8 @@ export interface MangaCardData {
   stt: number;
   title: string;
   cover: string;
+  description?: string;
+  author?: string;
   views: number | null;
   followers: number | null;
   likes: number | null;

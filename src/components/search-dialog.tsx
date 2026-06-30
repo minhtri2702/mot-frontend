@@ -197,10 +197,10 @@ export default function SearchDialog() {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] bg-black/50 backdrop-blur-md">
       <div
         ref={dialogRef}
-        className="w-full max-w-lg mx-4 bg-background rounded-xl shadow-2xl border overflow-hidden"
+        className="w-full max-w-lg mx-4 bg-[#18181B]/95 backdrop-blur-xl rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.5)] border border-white/[0.08] overflow-hidden"
       >
         {/* Search Input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b">
