@@ -101,7 +101,7 @@ function UserMenu() {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56 bg-[#18181B]/95 backdrop-blur-xl border border-white/[0.08]">
         <div className="flex items-center gap-2 px-2 py-1.5">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user.avatarUrl || undefined} alt={user.username} />
@@ -130,6 +130,13 @@ function UserMenu() {
           Lịch sử đọc
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/loi-ngo">
+            <BookOpen className="h-4 w-4 mr-2" />
+            Lời ngỏ
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
           <LogOut className="h-4 w-4 mr-2" />
           Đăng xuất
@@ -150,7 +157,7 @@ function MobileNav() {
           <span className="sr-only">Menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[280px] sm:w-[320px]">
+      <SheetContent side="left" className="w-[280px] sm:w-[320px] bg-[#18181B]/95 backdrop-blur-xl border-r border-white/[0.08]">
         <SheetHeader className="border-b pb-4 mb-4">
           <SheetTitle className="flex items-center">
             <BookOpen className="h-5 w-5 text-primary mr-2" />
@@ -233,7 +240,7 @@ function MobileNav() {
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/[0.06] bg-[rgba(10,10,10,0.75)] backdrop-blur-[10px] supports-[backdrop-filter]:bg-[rgba(10,10,10,0.6)]">
+    <header className="sticky top-0 z-50 w-full glass-header">
       <div className="container flex h-16 items-center justify-between">
         {/* Mobile Menu Button */}
         <MobileNav />
@@ -254,7 +261,7 @@ export default function Header() {
                   Thể loại <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="bg-[#18181B]/95 backdrop-blur-xl border border-white/[0.08]">
                 <DropdownMenuItem>
                   <Link href="/the-loai/action">Action</Link>
                 </DropdownMenuItem>
@@ -279,7 +286,7 @@ export default function Header() {
                   Quốc gia <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="bg-[#18181B]/95 backdrop-blur-xl border border-white/[0.08]">
                 <DropdownMenuItem>
                   <Link href="/quoc-gia/nhat-ban">Nhật Bản</Link>
                 </DropdownMenuItem>

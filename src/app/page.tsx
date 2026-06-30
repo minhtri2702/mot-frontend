@@ -30,7 +30,7 @@ function useFeaturedManga() {
 function useLatestUpdates() {
   return useQuery({
     queryKey: ["latest-updates"],
-    queryFn: () => getLatestUpdates(0, 12).catch(() => ({ content: [], page: 0, size: 12, totalElements: 0, totalPages: 0, last: true, first: true })),
+    queryFn: () => getLatestUpdates(0, 24).catch(() => ({ content: [], page: 0, size: 24, totalElements: 0, totalPages: 0, last: true, first: true })),
     staleTime: 2 * 60 * 1000,
   });
 }
@@ -38,7 +38,7 @@ function useLatestUpdates() {
 function useHotManga() {
   return useQuery({
     queryKey: ["hot-manga"],
-    queryFn: () => getHotManga(0, 12).catch(() => ({ content: [], page: 0, size: 12, totalElements: 0, totalPages: 0, last: true, first: true })),
+    queryFn: () => getHotManga(0, 24).catch(() => ({ content: [], page: 0, size: 24, totalElements: 0, totalPages: 0, last: true, first: true })),
     staleTime: 2 * 60 * 1000,
   });
 }
@@ -68,7 +68,7 @@ function toFeaturedData(m: MangaSummaryDTO): FeaturedMangaData {
     stt: m.stt,
     title: m.title,
     cover: m.coverImagePath,
-    description: "",
+    description: m.description || "",
     genres: m.genres.map((g: string, idx: number) => ({ id: idx, name: g, slug: g.toLowerCase() })),
     likes: m.likes,
     followers: m.followers,
@@ -83,6 +83,8 @@ function toCardData(m: MangaSummaryDTO): MangaCardData {
     stt: m.stt,
     title: m.title,
     cover: m.coverImagePath,
+    description: m.description || "",
+    author: m.author || "",
     views: m.views,
     followers: m.followers,
     likes: m.likes,
@@ -281,10 +283,10 @@ export default function Home() {
   }
 
   return (
-    <div className="container py-8 space-y-10">
+    <div className="container py-4 space-y-6">
       {/* ===== HERO BANNER - Full width ===== */}
       {currentHero && (
-        <section>
+        <section className="max-w-[100%] max-h-[75%] mx-auto">
           <FeaturedMangaCard
             manga={currentHero}
             isFirst={heroIndex === 0}
@@ -314,7 +316,7 @@ export default function Home() {
               </Link>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
-              {latestUpdates.slice(0, 12).map((manga) => (
+              {latestUpdates.slice(0, 24).map((manga) => (
                 <MangaCard key={manga.id} manga={manga} showBadge="time" />
               ))}
             </div>
@@ -332,7 +334,7 @@ export default function Home() {
               </Link>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
-              {trendingManga.slice(0, 12).map((manga) => (
+              {trendingManga.slice(0, 24).map((manga) => (
                 <MangaCard key={manga.id} manga={manga} showBadge="views" />
               ))}
             </div>
@@ -351,7 +353,7 @@ export default function Home() {
                 </Link>
               </div>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
-                {trendingManga.filter(m => m.status === "Hoàn thành").slice(0, 12).map((manga) => (
+                {trendingManga.filter(m => m.status === "Hoàn thành").slice(0, 24).map((manga) => (
                   <MangaCard key={manga.id} manga={manga} showBadge="rating" />
                 ))}
               </div>

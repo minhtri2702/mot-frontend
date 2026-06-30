@@ -23,7 +23,7 @@ export default function FeaturedMangaCard({
   totalSlides = 1
 }: FeaturedMangaCardProps) {
   return (
-    <div className="relative w-full h-[380px] md:h-[400px] lg:h-[420px] overflow-hidden rounded-xl bg-muted group">
+    <div className="relative w-full h-[334px] md:h-[352px] lg:h-[370px] overflow-hidden rounded-xl bg-muted group">
       {/* Background Image */}
       <img
         src={getCoverImageUrl(manga.cover)}
@@ -85,7 +85,7 @@ export default function FeaturedMangaCard({
               <Eye className="h-3.5 w-3.5" />
               <span>{formatNumber(manga.views)}</span>
             </div>
-            <Badge className="bg-[#EF4444]/80 text-white border-0 text-[10px] font-semibold px-2.5 py-0.5">
+            <Badge className="bg-[#EF4444]/80 text-white border border-white/[0.15] text-[10px] font-semibold px-2.5 py-0.5 backdrop-blur-sm">
               {manga.latestChapter ? `Ch. ${manga.latestChapter}` : "Mới"}
             </Badge>
           </div>

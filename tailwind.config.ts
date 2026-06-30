@@ -9,6 +9,18 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-jakarta)", "system-ui", "sans-serif"],
+      },
+      letterSpacing: {
+        tightest: "-0.04em",
+        tighter: "-0.02em",
+        tight: "-0.01em",
+        normal: "0em",
+        wide: "0.02em",
+        wider: "0.04em",
+        widest: "0.06em",
+      },
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
@@ -77,6 +89,7 @@ export default {
         'slide-in-left': 'slideInLeft 0.6s ease-out forwards',
         'slide-in-up': 'slideInUp 0.5s ease-out forwards',
         'fade-in': 'fadeIn 0.3s ease-out forwards',
+        'bounce': 'bounce 1.4s infinite ease-in-out',
       },
       keyframes: {
         slideInLeft: {
@@ -90,6 +103,10 @@ export default {
         fadeIn: {
           '0%': { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        bounce: {
+          '0%, 80%, 100%': { transform: 'scale(0)' },
+          '40%': { transform: 'scale(1)' },
         },
       },
     }

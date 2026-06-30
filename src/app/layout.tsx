@@ -1,14 +1,18 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/lib/auth";
 import { QueryProvider } from "@/lib/query-provider";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import AIChatbot from "@/components/ai-chatbot";
 
-const inter = Inter({ subsets: ["latin"] });
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+});
 
 export const metadata: Metadata = {
   title: "Góc Truyện Tranh Vui - Manga Reader",
@@ -26,7 +30,7 @@ export default function RootLayout({
         <link rel="preconnect" href="http://100.94.58.103:9000" />
         <link rel="dns-prefetch" href="http://100.94.58.103:9000" />
       </head>
-      <body className={inter.className}>
+      <body className={`${jakarta.variable} font-sans`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -43,6 +47,7 @@ export default function RootLayout({
             </AuthProvider>
           </QueryProvider>
           <Toaster />
+          <AIChatbot />
         </ThemeProvider>
       </body>
     </html>
