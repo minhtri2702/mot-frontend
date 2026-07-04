@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Shield, AlertTriangle, ThumbsUp, MessageSquare, Flag, Ban } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Tiêu Chuẩn Cộng Đồng - Góc Truyện Tranh Vui",
-  description: "Tiêu chuẩn cộng đồng của Góc Truyện Tranh Vui - Mọt Truyện",
+  title: "Tiêu Chuẩn Cộng Đồng - Mọt Truyện",
+  description: "Tiêu chuẩn cộng đồng của Mọt Truyện",
 };
 
 export default function TieuChuanCongDongPage() {
@@ -26,7 +26,7 @@ export default function TieuChuanCongDongPage() {
         {/* Content */}
         <div className="space-y-8">
           <p className="text-lg leading-relaxed">
-            Tại <strong>Góc Truyện Tranh Vui</strong>, chúng tôi tin rằng một cộng đồng 
+            Tại <strong>Mọt Truyện</strong>, chúng tôi tin rằng một cộng đồng 
             văn minh sẽ mang lại trải nghiệm tốt đẹp cho tất cả mọi người. Vì vậy, chúng tôi 
             mong muốn tất cả thành viên cùng tuân thủ những tiêu chuẩn sau đây.
           </p>
@@ -139,7 +139,7 @@ export default function TieuChuanCongDongPage() {
 
           <div className="text-center pt-4">
             <p className="text-muted-foreground">
-              Cảm ơn bạn đã chung tay xây dựng cộng đồng <strong>Góc Truyện Tranh Vui</strong> ngày càng tốt đẹp hơn! 🙏
+              Cảm ơn bạn đã chung tay xây dựng cộng đồng <strong>Mọt Truyện</strong> ngày càng tốt đẹp hơn! 🙏
             </p>
           </div>
         </div>

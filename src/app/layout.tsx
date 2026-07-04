@@ -15,8 +15,8 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Góc Truyện Tranh Vui - Manga Reader",
-  description: "Đọc truyện tranh, manga, webtoon miễn phí - Góc Truyện Tranh Vui",
+  title: "Mọt Truyện - Manga Reader",
+  description: "Đọc truyện tranh, manga, webtoon miễn phí - Mọt Truyện",
 };
 
 export default function RootLayout({
