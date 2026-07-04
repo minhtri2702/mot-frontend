@@ -116,18 +116,22 @@ export default function FeaturedMangaCard({
           {/* Action Buttons */}
           <div className="flex items-center gap-3 animate-slide-in-up">
             <Link href={`/truyen/${manga.id}`}>
-              <Button className="bg-[#EF4444] hover:bg-[#DC2626] text-white px-5 py-2 rounded-full font-medium text-sm transition-all duration-200 shadow-lg shadow-[#EF4444]/20 hover:shadow-[#EF4444]/30 hover:scale-105 active:scale-95">
-                <Play className="h-4 w-4 mr-1.5 fill-current" />
-                Đọc ngay
+              <Button asChild className="bg-[#EF4444] hover:bg-[#DC2626] text-white px-5 py-2 rounded-full font-medium text-sm transition-all duration-200 shadow-lg shadow-[#EF4444]/20 hover:shadow-[#EF4444]/30 hover:scale-105 active:scale-95">
+                <a>
+                  <Play className="h-4 w-4 mr-1.5 fill-current" />
+                  Đọc ngay
+                </a>
               </Button>
             </Link>
             <Link href={`/truyen/${manga.id}`}>
-              <Button
+              <Button asChild
                 variant="outline"
                 className="border-white/25 text-white/80 hover:bg-white/10 hover:text-white px-5 py-2 rounded-full font-medium text-sm transition-all duration-200 hover:scale-105 active:scale-95"
               >
-                <BookmarkPlus className="h-4 w-4 mr-1.5" />
-                Theo dõi
+                <a>
+                  <BookmarkPlus className="h-4 w-4 mr-1.5" />
+                  Theo dõi
+                </a>
               </Button>
             </Link>
           </div>
