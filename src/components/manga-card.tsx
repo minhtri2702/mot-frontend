@@ -16,7 +16,7 @@ interface MangaCardProps {
 const MangaCard = memo(function MangaCard({ manga, showBadge = "none" }: MangaCardProps) {
   return (
     <Link href={`/truyen/${manga.id}`} className="group block">
-      <div className="relative mb-2 aspect-[2/3] overflow-hidden rounded-xl bg-white/[0.04] border border-white/[0.06] transition-all duration-250 group-hover:-translate-y-[6px] group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] group-hover:border-white/[0.15] group-hover:bg-white/[0.06]">
+      <div className="relative mb-3 aspect-[3/4] overflow-hidden rounded-xl bg-white/[0.04] border border-white/[0.06] transition-all duration-250 group-hover:-translate-y-[6px] group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] group-hover:border-white/[0.15] group-hover:bg-white/[0.06]">
         <img
           src={getCoverImageUrl(manga.cover)}
           alt={manga.title}
@@ -38,50 +38,50 @@ const MangaCard = memo(function MangaCard({ manga, showBadge = "none" }: MangaCa
         )}
 
         {showBadge === "views" && manga.views != null && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2.5">
             <div className="flex items-center text-white">
-              <Eye className="h-3 w-3 mr-1" />
-              <span className="text-xs">{formatNumber(manga.views)}</span>
+              <Eye className="h-3.5 w-3.5 mr-1.5" />
+              <span className="text-xs font-medium">{formatNumber(manga.views)}</span>
             </div>
           </div>
         )}
 
         {showBadge === "followers" && manga.followers != null && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2.5">
             <div className="flex items-center text-white">
-              <Users className="h-3 w-3 mr-1" />
-              <span className="text-xs">{formatNumber(manga.followers)}</span>
+              <Users className="h-3.5 w-3.5 mr-1.5" />
+              <span className="text-xs font-medium">{formatNumber(manga.followers)}</span>
             </div>
           </div>
         )}
 
         {showBadge === "likes" && manga.likes != null && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2.5">
             <div className="flex items-center text-white">
-              <Heart className="h-3 w-3 mr-1" />
-              <span className="text-xs">{formatNumber(manga.likes)}</span>
+              <Heart className="h-3.5 w-3.5 mr-1.5" />
+              <span className="text-xs font-medium">{formatNumber(manga.likes)}</span>
             </div>
           </div>
         )}
 
         {showBadge === "time" && manga.updatedAt && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2.5">
             <div className="flex items-center text-white">
-              <Clock className="h-3 w-3 mr-1" />
-              <span className="text-xs">{manga.updatedAt}</span>
+              <Clock className="h-3.5 w-3.5 mr-1.5" />
+              <span className="text-xs font-medium">{manga.updatedAt}</span>
             </div>
           </div>
         )}
       </div>
 
-      <h3 className="font-medium line-clamp-1 text-sm md:text-base group-hover:text-primary transition-colors duration-300">{manga.title}</h3>
+      <h3 className="font-medium line-clamp-2 text-sm md:text-base leading-snug group-hover:text-primary transition-colors duration-300">{manga.title}</h3>
 
       {manga.chapter != null && (
-        <p className="text-xs text-muted-foreground">Chapter {manga.chapter}</p>
+        <p className="text-sm text-muted-foreground mt-0.5">Chapter {manga.chapter}</p>
       )}
 
       {manga.status && (
-        <p className={`text-xs mt-0.5 ${
+        <p className={`text-xs mt-1 ${
           manga.status === "Đang tiến hành"
             ? "text-green-600"
             : manga.status === "Hoàn thành"

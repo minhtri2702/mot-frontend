@@ -71,11 +71,11 @@ export default {
       container: {
         center: true,
         padding: {
-          DEFAULT: '20px',
-          sm: '24px',
-          lg: '3rem',
-          xl: '4rem',
-          '2xl': '5rem',
+          DEFAULT: '5px',
+          sm: '6px',
+          lg: '0.75rem',
+          xl: '1rem',
+          '2xl': '1.25rem',
         },
         screens: {
           sm: '640px',
