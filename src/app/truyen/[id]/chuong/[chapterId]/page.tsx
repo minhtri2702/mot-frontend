@@ -13,55 +13,33 @@ type ReadingMode = "scroll" | "page";
 
 // ============================================
 // Custom hook: hide header on scroll down, show on scroll up
-// Uses a callback ref pattern to attach to the scrollable element
+// Listens on window scroll
 // ============================================
 function useHideOnScroll(threshold = 10) {
   const [isHidden, setIsHidden] = useState(false);
   const lastScrollY = useRef(0);
-  const scrollElRef = useRef<HTMLDivElement | null>(null);
 
-  const scrollRefCallback = useCallback((node: HTMLDivElement | null) => {
-    // Clean up old listener
-    if (scrollElRef.current) {
-      scrollElRef.current.removeEventListener("scroll", handleScroll);
-    }
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const diff = currentScrollY - lastScrollY.current;
 
-    scrollElRef.current = node;
+      if (Math.abs(diff) < threshold) return;
 
-    // Attach new listener
-    if (node) {
-      node.addEventListener("scroll", handleScroll, { passive: true });
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+      if (diff > 0 && currentScrollY > 80) {
+        setIsHidden(true);
+      } else if (diff < 0) {
+        setIsHidden(false);
+      }
 
-  const handleScroll = useCallback(() => {
-    const el = scrollElRef.current;
-    if (!el) return;
+      lastScrollY.current = currentScrollY;
+    };
 
-    const currentScrollY = el.scrollTop;
-    const diff = currentScrollY - lastScrollY.current;
-
-    if (Math.abs(diff) < threshold) return;
-
-    if (diff > 0 && currentScrollY > 80) {
-      setIsHidden(true);
-    } else if (diff < 0) {
-      setIsHidden(false);
-    }
-
-    lastScrollY.current = currentScrollY;
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [threshold]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (scrollElRef.current) {
-        scrollElRef.current.removeEventListener("scroll", handleScroll);
-      }
-    };
-  }, [handleScroll]);
-
-  return { isHidden, scrollRefCallback };
+  return { isHidden };
 }
 
 // ============================================
@@ -115,9 +93,9 @@ export default function ChapterReaderPage() {
       const saved = localStorage.getItem(savedKey);
       if (saved) {
         const pos = parseInt(saved, 10);
-        if (!isNaN(pos) && scrollRef.current) {
+        if (!isNaN(pos)) {
           requestAnimationFrame(() => {
-            scrollRef.current?.scrollTo({ top: pos, behavior: "instant" });
+            window.scrollTo({ top: pos, behavior: "instant" });
           });
         }
       }
@@ -130,14 +108,14 @@ export default function ChapterReaderPage() {
     const savedKey = `reading-${id}-${chapterId}`;
 
     const handleScroll = () => {
-      if (!scrollRef.current || !contentRef.current) return;
+      if (!contentRef.current) return;
 
       // Use requestAnimationFrame for smooth progress updates
       if (progressRAFRef.current) cancelAnimationFrame(progressRAFRef.current);
       progressRAFRef.current = requestAnimationFrame(() => {
-        if (!scrollRef.current || !contentRef.current) return;
-        const scrollTop = scrollRef.current.scrollTop;
-        const scrollHeight = contentRef.current.scrollHeight - scrollRef.current.clientHeight;
+        if (!contentRef.current) return;
+        const scrollTop = window.scrollY;
+        const scrollHeight = contentRef.current.scrollHeight - window.innerHeight;
         const pct = scrollHeight > 0 ? Math.min(100, Math.round((scrollTop / scrollHeight) * 100)) : 0;
         setProgress(pct);
       });
@@ -145,14 +123,13 @@ export default function ChapterReaderPage() {
       // Throttle localStorage writes (500ms debounce)
       if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
       scrollTimerRef.current = setTimeout(() => {
-        localStorage.setItem(savedKey, scrollRef.current!.scrollTop.toString());
+        localStorage.setItem(savedKey, window.scrollY.toString());
       }, 500);
     };
 
-    const ref = scrollRef.current;
-    ref?.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
-      ref?.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", handleScroll);
       if (progressRAFRef.current) cancelAnimationFrame(progressRAFRef.current);
     };
   }, [chapter, loading, id, chapterId]);
@@ -170,13 +147,13 @@ export default function ChapterReaderPage() {
         window.location.href = `/truyen/${id}/chuong/${chapter.navigation.nextChapterId}`;
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        scrollRef.current?.scrollBy({ top: -window.innerHeight * 0.8, behavior: "smooth" });
+        window.scrollBy({ top: -window.innerHeight * 0.8, behavior: "smooth" });
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        scrollRef.current?.scrollBy({ top: window.innerHeight * 0.8, behavior: "smooth" });
+        window.scrollBy({ top: window.innerHeight * 0.8, behavior: "smooth" });
       } else if (e.key === " " && readingMode === "scroll") {
         e.preventDefault();
-        scrollRef.current?.scrollBy({ top: window.innerHeight * 0.9, behavior: "smooth" });
+        window.scrollBy({ top: window.innerHeight * 0.9, behavior: "smooth" });
       }
     };
 
@@ -217,7 +194,7 @@ export default function ChapterReaderPage() {
   }, [id, chapterId]);
 
   // Auto-hide header on scroll down (must be before early returns)
-  const { isHidden: headerHidden, scrollRefCallback } = useHideOnScroll();
+  const { isHidden: headerHidden } = useHideOnScroll();
 
   if (loading) {
     return <ChapterReaderSkeleton />;
@@ -322,17 +299,9 @@ export default function ChapterReaderPage() {
         </div>
       </div>
 
-      {/* Chapter Content */}
-      <div
-        ref={(node) => {
-          // Combine both refs: scrollRef for internal use + scrollRefCallback for auto-hide
-          (scrollRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-          scrollRefCallback(node);
-        }}
-        className={readingMode === "scroll" ? "overflow-y-auto" : ""}
-        style={readingMode === "scroll" ? { height: "calc(100vh - 57px)" } : {}}
-      >
-        <div ref={contentRef} className="max-w-4xl mx-auto px-4 sm:px-6 w-[73%]">
+      {/* Chapter Content - scroll on window */}
+      <div>
+        <div ref={contentRef} className="max-w-4xl mx-auto px-4 sm:px-6 w-[90%]">
           {readingMode === "scroll" ? (
             chapter.imageUrls.length > 0 ? (
               chapter.imageUrls.map((imageUrl, index) => (
@@ -390,9 +359,11 @@ export default function ChapterReaderPage() {
         </div>
       </div>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation - auto hide on scroll down */}
       {readingMode === "scroll" && (
-        <div className="bg-background border-t">
+        <div className={`bg-background border-t transition-transform duration-300 ${
+          headerHidden ? "translate-y-full" : "translate-y-0"
+        }`}>
           <div className="container flex items-center justify-center gap-4 py-4">
             {chapter.navigation.prevChapterId ? (
               <Button variant="outline" asChild>
