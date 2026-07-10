@@ -219,19 +219,6 @@ function MobileNav() {
             </Link>
           </div>
 
-          <div className="border-t my-2 pt-2">
-            <p className="text-xs text-muted-foreground px-3 pb-2 font-medium">QUỐC GIA</p>
-            {["Nhật Bản", "Hàn Quốc", "Trung Quốc", "Việt Nam"].map((country) => (
-              <Link
-                key={country}
-                href={`/quoc-gia/${country.toLowerCase()}`}
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted transition-colors text-sm"
-              >
-                {country}
-              </Link>
-            ))}
-          </div>
         </nav>
       </SheetContent>
     </Sheet>

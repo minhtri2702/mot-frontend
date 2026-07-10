@@ -103,13 +103,14 @@ export default function FeaturedMangaCard({
           {/* Genre Badges */}
           <div className="flex flex-wrap gap-1.5 mb-4">
             {manga.genres.slice(0, 3).map((g) => (
-              <Badge
-                key={g.id}
-                variant="secondary"
-                className="bg-white/10 backdrop-blur-sm text-white/70 border border-white/15 hover:bg-white/20 transition-colors text-[10px] font-medium px-2 py-0.5"
-              >
-                {g.name}
-              </Badge>
+              <Link key={g.id} href={`/the-loai/${g.slug}`}>
+                <Badge
+                  variant="secondary"
+                  className="bg-white/10 backdrop-blur-sm text-white/70 border border-white/15 hover:bg-white/20 transition-colors text-[10px] font-medium px-2 py-0.5 cursor-pointer"
+                >
+                  {g.name}
+                </Badge>
+              </Link>
             ))}
           </div>
 

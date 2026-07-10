@@ -47,13 +47,26 @@ const CACHE_TTL = {
 interface FetchOptions extends RequestInit {
   skipCache?: boolean;
   cacheTtl?: number;
+  auth?: boolean;
 }
 
 /**
- * Generic fetch wrapper with caching
+ * Get auth token from localStorage (works in both client and server components)
+ */
+function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem("auth_token");
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Generic fetch wrapper with caching and auth support
  */
 async function cachedFetch<T>(url: string, options: FetchOptions = {}): Promise<T> {
-  const { skipCache = false, cacheTtl, ...fetchOptions } = options;
+  const { skipCache = false, cacheTtl, auth = false, ...fetchOptions } = options;
 
   // Try cache first (unless skipCache is true)
   if (!skipCache) {
@@ -64,13 +77,20 @@ async function cachedFetch<T>(url: string, options: FetchOptions = {}): Promise<
     }
   }
 
+  // Attach auth token if available
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(fetchOptions.headers as Record<string, string>),
+  };
+  const token = auth ? getAuthToken() : null;
+  if (auth && token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   // Fetch from API
   const response = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      ...fetchOptions.headers,
-    },
     ...fetchOptions,
+    headers,
   });
 
   if (!response.ok) {
@@ -311,7 +331,7 @@ export interface ReadingHistoryDTO {
  */
 export async function getReadingHistory(userId: string, limit: number = 10): Promise<ReadingHistoryDTO[]> {
   const url = `${API_BASE_URL}/user/${userId}/reading-history?limit=${limit}`;
-  return cachedFetch<ReadingHistoryDTO[]>(url, { skipCache: true });
+  return cachedFetch<ReadingHistoryDTO[]>(url, { skipCache: true, auth: true });
 }
 
 // ============================================
@@ -337,9 +357,12 @@ export interface FavoriteDTO {
  */
 export async function addFavorite(userId: string, mangaId: string): Promise<void> {
   const url = `${API_BASE_URL}/user/${userId}/favorites/${mangaId}`;
+  const token = getAuthToken();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
   });
   if (!response.ok) {
     throw new Error(`Failed to add favorite: ${response.status}`);
@@ -351,9 +374,12 @@ export async function addFavorite(userId: string, mangaId: string): Promise<void
  */
 export async function removeFavorite(userId: string, mangaId: string): Promise<void> {
   const url = `${API_BASE_URL}/user/${userId}/favorites/${mangaId}`;
+  const token = getAuthToken();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   const response = await fetch(url, {
     method: "DELETE",
-    headers: { "Content-Type": "application/json" },
+    headers,
   });
   if (!response.ok) {
     throw new Error(`Failed to remove favorite: ${response.status}`);
@@ -365,7 +391,7 @@ export async function removeFavorite(userId: string, mangaId: string): Promise<v
  */
 export async function checkFavorite(userId: string, mangaId: string): Promise<boolean> {
   const url = `${API_BASE_URL}/user/${userId}/favorites/${mangaId}/check`;
-  return cachedFetch<boolean>(url, { skipCache: true });
+  return cachedFetch<boolean>(url, { skipCache: true, auth: true });
 }
 
 /**
@@ -373,7 +399,7 @@ export async function checkFavorite(userId: string, mangaId: string): Promise<bo
  */
 export async function getFavorites(userId: string, page: number = 0, size: number = 20): Promise<PagedResponseDTO<FavoriteDTO>> {
   const url = `${API_BASE_URL}/user/${userId}/favorites?page=${page}&size=${size}`;
-  return cachedFetch<PagedResponseDTO<FavoriteDTO>>(url, { cacheTtl: CACHE_TTL.LISTING });
+  return cachedFetch<PagedResponseDTO<FavoriteDTO>>(url, { cacheTtl: CACHE_TTL.LISTING, auth: true });
 }
 
 // ============================================
@@ -456,14 +482,17 @@ export async function addComment(
   avatarUrl?: string
 ): Promise<CommentDTO> {
   const url = `${API_BASE_URL}/manga/${mangaId}/comments`;
+  const token = getAuthToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "X-User-Id": userId,
+    "X-User-Name": username,
+    ...(avatarUrl ? { "X-User-Avatar": avatarUrl } : {}),
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   const response = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-User-Id": userId,
-      "X-User-Name": username,
-      ...(avatarUrl ? { "X-User-Avatar": avatarUrl } : {}),
-    },
+    headers,
     body: JSON.stringify(request),
   });
   if (!response.ok) throw new Error(`Failed to add comment: ${response.status}`);
@@ -480,12 +509,15 @@ export async function updateComment(
   userId: string
 ): Promise<CommentDTO> {
   const url = `${API_BASE_URL}/comments/${commentId}`;
+  const token = getAuthToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "X-User-Id": userId,
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   const response = await fetch(url, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "X-User-Id": userId,
-    },
+    headers,
     body: JSON.stringify({ content }),
   });
   if (!response.ok) throw new Error(`Failed to update comment: ${response.status}`);
@@ -498,9 +530,12 @@ export async function updateComment(
  */
 export async function deleteComment(commentId: string, userId: string): Promise<void> {
   const url = `${API_BASE_URL}/comments/${commentId}`;
+  const token = getAuthToken();
+  const headers: Record<string, string> = { "X-User-Id": userId };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   const response = await fetch(url, {
     method: "DELETE",
-    headers: { "X-User-Id": userId },
+    headers,
   });
   if (!response.ok) throw new Error(`Failed to delete comment: ${response.status}`);
 }
@@ -510,9 +545,12 @@ export async function deleteComment(commentId: string, userId: string): Promise<
  */
 export async function toggleLikeComment(commentId: string, userId: string): Promise<void> {
   const url = `${API_BASE_URL}/comments/${commentId}/like`;
+  const token = getAuthToken();
+  const headers: Record<string, string> = { "X-User-Id": userId };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   const response = await fetch(url, {
     method: "POST",
-    headers: { "X-User-Id": userId },
+    headers,
   });
   if (!response.ok) throw new Error(`Failed to toggle like: ${response.status}`);
 }
