@@ -31,6 +31,7 @@ jobs:
           docker build \
             --build-arg NEXT_PUBLIC_API_URL=/api/v1 \
             --build-arg NEXT_PUBLIC_AUTH_API_URL=/auth \
+            --build-arg NEXT_PUBLIC_GOOGLE_CLIENT_ID=695451075871-jtr8p39l8dm7inm3bgmiqb2p912fg9o3.apps.googleusercontent.com \
             -t ghcr.io/minhtri2702/mot-frontend:latest .
 
       - name: Push Docker image
