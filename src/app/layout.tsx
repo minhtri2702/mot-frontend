@@ -23,9 +23,9 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "Mọt Truyện - Manga Reader",
   icons: {
-    icon: "/favicon.png",
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
+    icon: "/favicon.svg?v=2",
+    shortcut: "/favicon.svg?v=2",
+    apple: "/favicon.svg?v=2",
   },
   description: "Đọc truyện tranh, manga, webtoon miễn phí - Mọt Truyện",
 };
@@ -38,6 +38,9 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml" />
+        <link rel="shortcut icon" href="/favicon.svg?v=2" />
+        <link rel="apple-touch-icon" href="/favicon.svg?v=2" />
         <link rel="preconnect" href="http://100.94.58.103:9000" />
         <link rel="dns-prefetch" href="http://100.94.58.103:9000" />
       </head>
