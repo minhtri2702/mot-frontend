@@ -268,11 +268,6 @@ export default function Header() {
             </DropdownMenu>
 
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center">
-                  Quốc gia <ChevronDown className="ml-1 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-[#18181B]/95 backdrop-blur-xl border border-white/[0.08]">
                 <DropdownMenuItem>
                   <Link href="/quoc-gia/nhat-ban">Nhật Bản</Link>
@@ -338,9 +333,6 @@ export default function Header() {
                 <Heart className="h-5 w-5" />
               </Button>
             </Link>
-            <Button variant="ghost" size="icon" title="Bảng xếp hạng" className="hidden sm:inline-flex">
-              <BarChart className="h-5 w-5" />
-            </Button>
             <UserMenu />
           </div>
         </div>

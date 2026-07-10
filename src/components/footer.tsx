@@ -33,11 +33,6 @@ export default function Footer() {
                   Truyện Full
                 </Link>
               </li>
-              <li>
-                <Link href="/bang-xep-hang" className="text-sm hover:text-primary">
-                  Bảng xếp hạng
-                </Link>
-              </li>
             </ul>
           </div>
           <div>

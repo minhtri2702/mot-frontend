@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, Eye, Play, BookmarkPlus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, Eye, Play, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { getCoverImageUrl, formatNumber } from "@/lib/api";
 import type { FeaturedMangaData } from "@/lib/types";
 
@@ -130,8 +130,8 @@ export default function FeaturedMangaCard({
                 className="border-white/25 text-white/80 hover:bg-white/10 hover:text-white px-5 py-2 rounded-full font-medium text-sm transition-all duration-200 hover:scale-105 active:scale-95"
               >
                 <a>
-                  <BookmarkPlus className="h-4 w-4 mr-1.5" />
-                  Theo dõi
+                  <Heart className="h-4 w-4 mr-1.5 fill-current text-red-400" />
+                  Yêu thích
                 </a>
               </Button>
             </Link>

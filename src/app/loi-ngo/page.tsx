@@ -25,7 +25,7 @@ export default function LoiNgoPage() {
         <article className="flex-1 space-y-2 overflow-hidden text-[10.5px] leading-[1.45] text-muted-foreground sm:text-xs sm:leading-5 md:space-y-4 md:overflow-visible md:text-sm md:leading-7">
 
           <p>
-            Dạo này ốm yếu hom hem quá nên mãi mà không xong đuợc, mình nghĩ về nó lần đầu vào ngày 23/1/2024 nhưng về sau mải chuyện đi học, rồi chuyện đi làm nên giờ mới hòm hòm. Mãi mình vẫn nhớ về  một góc nhỏ ở Mọt Coffee, quán cà phê sách giữa lòng Hà Nội.
+            Dạo này vừa ốm vừa lười nên mãi không xong đuợc, mình nghĩ về nó lần đầu vào những ngày đầu năm nhưng về sau mải chuyện đi học, rồi chuyện đi làm nên giờ mới hòm hòm. Mãi mình vẫn nhớ về  một góc nhỏ ở Mọt Coffee, quán cà phê sách giữa lòng Hà Nội.
             <br />
             Trên bàn, cốc bơ già thảo mộc vẫn còn nghi ngút khói, cuốn Rừng Na Uy nằm mở, radio vang lên giai điệu Mary on a Cross
           </p>
