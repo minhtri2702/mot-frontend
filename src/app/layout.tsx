@@ -22,6 +22,11 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: "Mọt Truyện - Manga Reader",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
   description: "Đọc truyện tranh, manga, webtoon miễn phí - Mọt Truyện",
 };
 
