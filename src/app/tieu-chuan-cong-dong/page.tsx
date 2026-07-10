@@ -3,11 +3,6 @@ import { Shield, AlertTriangle, ThumbsUp, MessageSquare, Flag, Ban } from "lucid
 
 export const metadata: Metadata = {
   title: "Tiêu Chuẩn Cộng Đồng - Mọt Truyện",
-  icons: {
-    icon: "/favicon.png",
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
-  },
   description: "Tiêu chuẩn cộng đồng của Mọt Truyện",
 };
 
