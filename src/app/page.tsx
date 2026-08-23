@@ -248,6 +248,12 @@ export default function Home() {
     .slice(0, 5)
     .map(toCardData);
 
+  const readingProgressFor = (manga: MangaCardData) => {
+    const history = localHistory.find((item) => item.mangaId === manga.id);
+    if (!history || !manga.chapter || manga.chapter <= 0) return undefined;
+    return (history.chapterNumber / manga.chapter) * 100;
+  };
+
   // Hero navigation
   const heroSlides = featuredManga.slice(0, 5);
   const currentHero = heroSlides[heroIndex] || heroSlides[0];
@@ -415,7 +421,12 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {trendingManga.slice(0, 18).map((manga) => (
-                <MangaCard key={manga.id} manga={manga} showBadge="views" />
+                <MangaCard
+                  key={manga.id}
+                  manga={manga}
+                  showBadge="views"
+                  readingProgress={readingProgressFor(manga)}
+                />
               ))}
             </div>
           </section>
@@ -485,7 +496,12 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                 {trendingManga.filter(m => m.status === "Hoàn thành").slice(0, 24).map((manga) => (
-                  <MangaCard key={manga.id} manga={manga} showBadge="rating" />
+                  <MangaCard
+                    key={manga.id}
+                    manga={manga}
+                    showBadge="rating"
+                    readingProgress={readingProgressFor(manga)}
+                  />
                 ))}
               </div>
             </section>

@@ -1,19 +1,25 @@
 import Link from "next/link";
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Star, Clock, Heart, Users } from "lucide-react";
+import { Eye, Star, Clock, Heart, Users, Play } from "lucide-react";
 import { getCoverImageUrl, formatNumber } from "@/lib/api";
 import type { MangaCardData } from "@/lib/types";
 
 interface MangaCardProps {
   manga: MangaCardData;
   showBadge?: "rating" | "views" | "time" | "followers" | "likes" | "none";
+  readingProgress?: number;
 }
 
 /**
  * MangaCard - Optimized with React.memo to prevent re-renders
  */
-const MangaCard = memo(function MangaCard({ manga, showBadge = "none" }: MangaCardProps) {
+const MangaCard = memo(function MangaCard({ manga, showBadge = "none", readingProgress }: MangaCardProps) {
+  const discoveryBadge = showBadge === "views" ? "HOT" : showBadge === "time" ? "NEW" : null;
+  const progress = readingProgress == null
+    ? null
+    : Math.min(100, Math.max(2, Math.round(readingProgress)));
+
   return (
     <Link href={`/truyen/${manga.id}`} className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background">
       <div className="relative mb-2.5 aspect-[3/4] overflow-hidden rounded-xl bg-muted ring-1 ring-border/70 transition duration-200 ease-out group-hover:-translate-y-1 group-hover:shadow-[0_12px_32px_rgba(18,14,10,0.28)] group-hover:ring-primary/35">
@@ -26,6 +32,19 @@ const MangaCard = memo(function MangaCard({ manga, showBadge = "none" }: MangaCa
           loading="lazy"
           onError={(e) => { e.currentTarget.src = "/placeholder-cover.svg"; }}
         />
+
+        <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-[#151515]/90 via-[#151515]/10 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+          <span className="mb-1 inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-lg">
+            <Play className="h-3.5 w-3.5 fill-current" />
+            Đọc ngay
+          </span>
+        </div>
+
+        {discoveryBadge && (
+          <span className="absolute left-2 top-2 rounded-md bg-primary px-2 py-1 text-[10px] font-bold tracking-wide text-primary-foreground shadow-sm">
+            {discoveryBadge}
+          </span>
+        )}
 
         {/* Badge - only render the active one */}
         {showBadge === "rating" && manga.likes != null && (
@@ -90,6 +109,18 @@ const MangaCard = memo(function MangaCard({ manga, showBadge = "none" }: MangaCa
         }`}>
           {manga.status}
         </p>
+      )}
+
+      {progress != null && (
+        <div className="mt-2" aria-label={`Đã đọc ${progress}%`}>
+          <div className="mb-1 flex items-center justify-between text-[10px] font-medium text-muted-foreground">
+            <span>Đang đọc</span>
+            <span>{progress}%</span>
+          </div>
+          <div className="h-1 overflow-hidden rounded-full bg-muted">
+            <div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} />
+          </div>
+        </div>
       )}
     </Link>
   );

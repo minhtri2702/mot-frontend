@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import Link from "next/link";
-import { Search, X, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { Search, X, Loader2, Eye, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { searchManga, getCoverImageUrl } from "@/lib/api";
+import { searchManga, getCoverImageUrl, formatNumber } from "@/lib/api";
 import type { MangaSummaryDTO } from "@/lib/api";
 
 interface SearchResult {
@@ -16,6 +17,7 @@ interface SearchResult {
   author?: string;
   views?: number;
   genres?: string[];
+  status?: string;
 }
 
 // Memoized search result item
@@ -23,15 +25,19 @@ const SearchResultItem = memo(function SearchResultItem({
   item,
   isSelected,
   onSelect,
+  onHighlight,
 }: {
   item: SearchResult;
   isSelected: boolean;
   onSelect: () => void;
+  onHighlight: () => void;
 }) {
   return (
     <Link
       href={`/truyen/${item.id}`}
       onClick={onSelect}
+      onMouseEnter={onHighlight}
+      onFocus={onHighlight}
       className={`flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors ${
         isSelected ? "bg-muted" : ""
       }`}
@@ -51,7 +57,7 @@ const SearchResultItem = memo(function SearchResultItem({
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {item.author && <span className="truncate max-w-[120px]">{item.author}</span>}
           {item.chapter && <span>• Chương {item.chapter}</span>}
-          {item.views && item.views > 0 && <span>• {item.views >= 1000 ? `${(item.views / 1000).toFixed(1)}K` : item.views} lượt xem</span>}
+          {item.views && item.views > 0 && <span>• {formatNumber(item.views)} lượt xem</span>}
         </div>
         {item.genres && item.genres.length > 0 && (
           <div className="flex gap-1 mt-0.5">
@@ -76,6 +82,7 @@ export default function SearchDialog() {
   const inputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const searchSequenceRef = useRef(0);
 
   // Open dialog on Ctrl+K or /
   useEffect(() => {
@@ -118,18 +125,23 @@ export default function SearchDialog() {
   // Search logic with debounce
   useEffect(() => {
     if (!query.trim()) {
+      searchSequenceRef.current += 1;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
       setResults([]);
       setSelectedIndex(-1);
+      setLoading(false);
       return;
     }
 
     setLoading(true);
+    const sequence = ++searchSequenceRef.current;
 
     // Debounce search
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       try {
         const data = await searchManga(query.trim(), 0, 8);
+        if (sequence !== searchSequenceRef.current) return;
         setResults(
           data.content.map((m: MangaSummaryDTO) => ({
             id: m.id,
@@ -139,16 +151,18 @@ export default function SearchDialog() {
             author: m.author,
             views: m.views,
             genres: m.genres,
+            status: m.status,
           }))
         );
-        setSelectedIndex(-1);
+        setSelectedIndex(data.content.length > 0 ? 0 : -1);
       } catch (error) {
+        if (sequence !== searchSequenceRef.current) return;
         console.error("Search failed:", error);
         setResults([]);
       } finally {
-        setLoading(false);
+        if (sequence === searchSequenceRef.current) setLoading(false);
       }
-    }, 150);
+    }, 220);
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -181,6 +195,7 @@ export default function SearchDialog() {
   );
 
   const closeDialog = useCallback(() => setIsOpen(false), []);
+  const selectedResult = selectedIndex >= 0 ? results[selectedIndex] : results[0];
 
   if (!isOpen) {
     return (
@@ -200,7 +215,7 @@ export default function SearchDialog() {
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] bg-black/50 backdrop-blur-md">
       <div
         ref={dialogRef}
-        className="w-full max-w-lg mx-4 bg-[#18181B]/95 backdrop-blur-xl rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.5)] border border-white/[0.08] overflow-hidden"
+        className="mx-4 w-full max-w-3xl overflow-hidden rounded-2xl border border-white/[0.08] bg-[#18181B]/95 shadow-[0_25px_60px_rgba(0,0,0,0.5)] backdrop-blur-xl"
       >
         {/* Search Input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b">
@@ -228,7 +243,8 @@ export default function SearchDialog() {
         </div>
 
         {/* Results */}
-        <div className="max-h-[60vh] overflow-y-auto">
+        <div className="grid md:grid-cols-[minmax(0,1fr)_17rem]">
+          <div className="max-h-[60vh] overflow-y-auto">
           {loading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -245,6 +261,7 @@ export default function SearchDialog() {
                   item={item}
                   isSelected={index === selectedIndex}
                   onSelect={closeDialog}
+                  onHighlight={() => setSelectedIndex(index)}
                 />
               ))}
               {/* Xem tất cả kết quả */}
@@ -274,6 +291,55 @@ export default function SearchDialog() {
               </div>
             </div>
           ) : null}
+          </div>
+
+          <aside className="relative hidden min-h-[24rem] overflow-hidden border-l border-white/[0.08] bg-muted/30 md:block" aria-label="Xem trước kết quả">
+            {selectedResult ? (
+              <>
+                <Image
+                  src={getCoverImageUrl(selectedResult.cover)}
+                  alt=""
+                  fill
+                  sizes="272px"
+                  className="object-cover opacity-30 blur-[1px]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#18181B] via-[#18181B]/82 to-[#18181B]/25" />
+                <div className="absolute inset-0 flex flex-col justify-end p-5">
+                  <div className="relative mb-4 aspect-[3/4] w-24 overflow-hidden rounded-lg ring-1 ring-white/15">
+                    <Image
+                      src={getCoverImageUrl(selectedResult.cover)}
+                      alt={selectedResult.title}
+                      fill
+                      sizes="96px"
+                      className="object-cover"
+                    />
+                  </div>
+                  <p className="line-clamp-2 text-lg font-semibold leading-snug text-white">{selectedResult.title}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/60">
+                    {selectedResult.chapter != null && <span>Chương {selectedResult.chapter}</span>}
+                    {selectedResult.status && <span>{selectedResult.status}</span>}
+                    {selectedResult.views != null && selectedResult.views > 0 && (
+                      <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{formatNumber(selectedResult.views)}</span>
+                    )}
+                  </div>
+                  {selectedResult.genres && selectedResult.genres.length > 0 && (
+                    <p className="mt-2 line-clamp-1 text-xs text-white/50">{selectedResult.genres.slice(0, 3).join(" · ")}</p>
+                  )}
+                  <Link
+                    href={`/truyen/${selectedResult.id}`}
+                    onClick={closeDialog}
+                    className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground"
+                  >
+                    Xem truyện <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <div className="grid h-full place-items-center p-6 text-center text-sm text-muted-foreground">
+                Chọn một kết quả để xem trước
+              </div>
+            )}
+          </aside>
         </div>
 
         {/* Footer hint */}

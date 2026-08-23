@@ -37,8 +37,8 @@ export default function FeaturedMangaCard({
       />
 
       {/* Cinematic Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#151515]/95 via-[#151515]/72 to-[#151515]/10" />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#151515]/75 via-transparent to-[#151515]/10" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#151515]/92 via-[#151515]/52 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#151515]/65 via-transparent to-[#151515]/5" />
 
       {/* Navigation Arrows */}
       {onPrev && onNext && totalSlides > 1 && (
@@ -77,7 +77,7 @@ export default function FeaturedMangaCard({
 
       {/* Content */}
       <div className="absolute inset-0 flex items-end lg:items-center">
-        <div className="w-full p-6 md:p-10 lg:w-[64%] lg:p-12">
+        <div className="w-full p-6 md:p-10 lg:w-[55%] lg:p-12">
           {/* Rating & Meta */}
           <div className="flex items-center gap-3 mb-3">
             <div className="flex items-center gap-1">
@@ -99,13 +99,13 @@ export default function FeaturedMangaCard({
           </h2>
 
           {/* Description */}
-          <p className="mb-4 line-clamp-2 max-w-xl text-sm leading-relaxed text-white/65 md:text-base">
+          <p className="mb-4 line-clamp-1 max-w-lg text-sm leading-relaxed text-white/65 md:text-base">
             {manga.description || "Một tác phẩm đầy cuốn hút với cốt truyện sâu sắc và hình ảnh tuyệt đẹp."}
           </p>
 
           {/* Genre Badges */}
           <div className="flex flex-wrap gap-1.5 mb-4">
-            {manga.genres.slice(0, 3).map((g) => (
+            {manga.genres.slice(0, 2).map((g) => (
               <Link key={g.id} href={`/the-loai/${g.slug}`}>
                 <Badge
                   variant="secondary"
@@ -119,7 +119,7 @@ export default function FeaturedMangaCard({
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3">
-            <Button asChild className="h-10 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary/90">
+            <Button asChild className="h-11 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-[0_10px_28px_hsl(var(--primary)/0.25)] transition-colors duration-200 hover:bg-primary/90">
               <Link href={`/truyen/${manga.id}`}>
                   <Play className="h-4 w-4 mr-1.5 fill-current" />
                   Đọc ngay
