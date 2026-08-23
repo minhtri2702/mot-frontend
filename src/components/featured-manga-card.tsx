@@ -23,13 +23,13 @@ export default function FeaturedMangaCard({
   totalSlides = 1
 }: FeaturedMangaCardProps) {
   return (
-    <div className="group relative h-[360px] w-full overflow-hidden rounded-[18px] bg-muted ring-1 ring-border md:h-[390px] lg:h-[420px]">
+    <div className="group relative h-[390px] w-full overflow-hidden rounded-[18px] bg-muted ring-1 ring-border md:h-[440px] lg:h-[480px]">
       {/* Background Image */}
       <img
         src={getCoverImageUrl(manga.cover)}
         alt={manga.title}
         width="1200"
-        height="420"
+        height="480"
         loading="eager"
         fetchPriority={isFirst ? "high" : "auto"}
         className="absolute inset-0 h-full w-full object-cover"
@@ -77,7 +77,7 @@ export default function FeaturedMangaCard({
 
       {/* Content */}
       <div className="absolute inset-0 flex items-end lg:items-center">
-        <div className="w-full p-6 md:p-9 lg:w-[62%] lg:p-12">
+        <div className="w-full p-6 md:p-10 lg:w-[64%] lg:p-12">
           {/* Rating & Meta */}
           <div className="flex items-center gap-3 mb-3">
             <div className="flex items-center gap-1">

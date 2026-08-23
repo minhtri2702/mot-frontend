@@ -266,8 +266,8 @@ export default function Home() {
         <section>
           <div className="mb-4 h-7 w-40 animate-pulse rounded-md bg-muted" />
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-            <div className="h-[360px] animate-pulse rounded-[18px] bg-muted ring-1 ring-border md:h-[390px] lg:h-[420px]" />
-            <div className="hidden h-[420px] animate-pulse rounded-[18px] bg-muted ring-1 ring-border lg:block" />
+            <div className="h-[390px] animate-pulse rounded-[18px] bg-muted ring-1 ring-border md:h-[440px] lg:h-[480px]" />
+            <div className="hidden h-[480px] animate-pulse rounded-[18px] bg-muted ring-1 ring-border lg:block" />
           </div>
         </section>
         <MangaGridSkeleton count={12} />
@@ -276,7 +276,7 @@ export default function Home() {
   }
 
   return (
-    <div className="container space-y-10 py-5 md:py-8">
+    <div className="container space-y-7 py-4 md:space-y-8 md:py-6">
       {/* ===== FEATURED STAGE + COMPACT RANKING ===== */}
       {currentHero && (
         <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]" aria-label="Truyện nổi bật">
@@ -292,7 +292,7 @@ export default function Home() {
           </div>
 
           {topViews.length > 0 && (
-            <div className="min-w-0 rounded-[18px] bg-card p-4 ring-1 ring-border lg:h-[420px]">
+            <div className="flex min-w-0 flex-col overflow-hidden rounded-[18px] bg-card p-4 ring-1 ring-border lg:h-[480px]">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Bảng xếp hạng</p>
@@ -303,12 +303,12 @@ export default function Home() {
                 </Link>
               </div>
 
-              <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-2 lg:block lg:space-y-1 lg:overflow-visible lg:pb-0">
+              <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-2 lg:grid lg:min-h-0 lg:flex-1 lg:grid-rows-5 lg:gap-1 lg:overflow-hidden lg:pb-0">
                 {topViews.map((manga, index) => (
                   <Link
                     key={manga.id}
                     href={`/truyen/${manga.id}`}
-                    className="group flex min-w-[220px] snap-start items-center gap-3 rounded-xl p-2 transition-colors hover:bg-muted lg:min-w-0"
+                    className="group flex min-w-[220px] snap-start items-center gap-3 rounded-xl p-2 transition-colors hover:bg-muted lg:min-h-0 lg:min-w-0"
                   >
                     <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg text-sm font-bold ${
                       index === 0
@@ -346,7 +346,7 @@ export default function Home() {
       {genres.length > 0 && (
         <nav
           aria-label="Khám phá truyện theo thể loại"
-          className="flex flex-col gap-3 border-b border-border pb-5 md:flex-row md:items-center"
+          className="flex flex-col gap-2.5 border-b border-border pb-4 md:flex-row md:items-center"
         >
           <div className="flex shrink-0 items-center gap-2 text-sm font-semibold">
             <Tag className="h-4 w-4 text-primary" />
@@ -375,7 +375,7 @@ export default function Home() {
       {/* ===== CONTINUE READING ===== */}
       {localHistory.length > 0 && (
         <section aria-labelledby="continue-reading-title">
-          <div className="mb-5 flex items-end justify-between gap-4 border-b border-border pb-4">
+          <div className="mb-4 flex items-end justify-between gap-4 border-b border-border pb-3">
             <div>
               <h2 id="continue-reading-title" className="flex items-center gap-2 text-xl font-semibold md:text-2xl">
                 <History className="h-5 w-5 text-primary" />
@@ -397,14 +397,14 @@ export default function Home() {
       )}
 
       {/* ===== TWO-COLUMN LAYOUT: Main + Sidebar ===== */}
-      <div className="flex flex-col gap-10 lg:flex-row lg:gap-12">
+      <div className="flex flex-col gap-8 lg:flex-row lg:gap-8">
 
         {/* ===== MAIN CONTENT (LEFT) ===== */}
-        <div className="min-w-0 flex-1 space-y-14">
+        <div className="min-w-0 flex-1 space-y-10">
 
           {/* ===== Được đọc nhiều ===== */}
           <section>
-            <div className="mb-6 flex items-end justify-between gap-4 border-b border-border pb-4">
+            <div className="mb-4 flex items-end justify-between gap-4 border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
                 <h2 className="text-xl font-semibold md:text-2xl">Được đọc nhiều</h2>
@@ -414,7 +414,7 @@ export default function Home() {
               </Link>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {trendingManga.slice(0, 12).map((manga) => (
+              {trendingManga.slice(0, 18).map((manga) => (
                 <MangaCard key={manga.id} manga={manga} showBadge="views" />
               ))}
             </div>
@@ -422,7 +422,7 @@ export default function Home() {
 
           {/* ===== Mới cập nhật ===== */}
           <section>
-            <div className="mb-6 flex items-end justify-between gap-4 border-b border-border pb-4">
+            <div className="mb-4 flex items-end justify-between gap-4 border-b border-border pb-3">
               <h2 className="flex items-center gap-2 text-xl font-semibold md:text-2xl">
                 <Clock className="h-5 w-5 text-primary" />
                 Mới cập nhật
@@ -431,12 +431,12 @@ export default function Home() {
                 Xem tất cả <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
-            <div className="grid gap-x-6 md:grid-cols-2">
-              {latestUpdates.slice(0, 12).map((manga) => (
+            <div className="grid gap-x-6 md:grid-cols-2 xl:grid-cols-3">
+              {latestUpdates.slice(0, 18).map((manga) => (
                 <Link
                   key={manga.id}
                   href={`/truyen/${manga.id}`}
-                  className="group flex min-h-24 items-center gap-3 border-b border-border/70 py-3 transition-colors hover:border-primary/40"
+                  className="group flex min-h-20 items-center gap-3 border-b border-border/70 py-2.5 transition-colors hover:border-primary/40"
                 >
                   <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded-md bg-muted ring-1 ring-border/70">
                     <Image
@@ -474,7 +474,7 @@ export default function Home() {
           {/* ===== Truyện Hoàn Thành ===== */}
           {trendingManga.filter(m => m.status === "Hoàn thành").length > 0 && (
             <section>
-              <div className="mb-6 flex items-end justify-between gap-4 border-b border-border pb-4">
+              <div className="mb-4 flex items-end justify-between gap-4 border-b border-border pb-3">
                 <h2 className="flex items-center gap-2 text-xl font-semibold md:text-2xl">
                   <Flame className="h-5 w-5 text-orange-500" />
                   Truyện Hoàn Thành

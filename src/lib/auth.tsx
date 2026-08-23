@@ -136,7 +136,14 @@ export async function loginWithGoogle(idToken: string): Promise<{ token: string;
   });
 
   if (!response.ok) {
-    throw new Error(`Google login failed: ${response.status} ${response.statusText}`);
+    let detail = response.statusText;
+    try {
+      const errorBody = await response.json();
+      detail = errorBody?.data?.messages?.[0] || errorBody?.data?.message || errorBody?.message || detail;
+    } catch {
+      // Keep the HTTP status text when the proxy returns a non-JSON response.
+    }
+    throw new Error(`Google login failed: ${response.status} ${detail}`);
   }
 
   const raw = await response.json();
