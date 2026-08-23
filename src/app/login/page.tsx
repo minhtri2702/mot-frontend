@@ -30,6 +30,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { isAuthenticated, login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
 
   // Redirect if already logged in
@@ -41,6 +42,12 @@ export default function LoginPage() {
 
   // Initialize Google Sign-In
   useEffect(() => {
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim();
+    if (!googleClientId) {
+      setGoogleError("Đăng nhập Google chưa được cấu hình. Vui lòng dùng email hoặc liên hệ quản trị viên.");
+      return;
+    }
+
     // Load Google Identity Services script
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
@@ -49,7 +56,7 @@ export default function LoginPage() {
     script.onload = () => {
       if (window.google) {
         window.google.accounts.id.initialize({
-          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
+          client_id: googleClientId,
           callback: handleGoogleLogin,
         });
         const buttonContainer = document.getElementById("google-signin-button");
@@ -63,6 +70,9 @@ export default function LoginPage() {
           });
         }
       }
+    };
+    script.onerror = () => {
+      setGoogleError("Không thể tải dịch vụ đăng nhập Google. Vui lòng thử lại sau.");
     };
     document.body.appendChild(script);
 
@@ -132,6 +142,11 @@ export default function LoginPage() {
 
             <TabsContent value="google" className="flex flex-col items-center gap-4">
               <div id="google-signin-button" className="min-h-[40px]"></div>
+              {googleError && (
+                <p role="alert" className="text-center text-sm text-destructive">
+                  {googleError}
+                </p>
+              )}
               {isLoading && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />

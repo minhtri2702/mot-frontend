@@ -265,7 +265,10 @@ export default function Home() {
       <div className="container space-y-12 py-8">
         <section>
           <div className="mb-4 h-7 w-40 animate-pulse rounded-md bg-muted" />
-          <div className="h-[360px] animate-pulse rounded-[18px] bg-muted ring-1 ring-border md:h-[390px] lg:h-[420px]" />
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+            <div className="h-[360px] animate-pulse rounded-[18px] bg-muted ring-1 ring-border md:h-[390px] lg:h-[420px]" />
+            <div className="hidden h-[420px] animate-pulse rounded-[18px] bg-muted ring-1 ring-border lg:block" />
+          </div>
         </section>
         <MangaGridSkeleton count={12} />
       </div>
@@ -274,18 +277,99 @@ export default function Home() {
 
   return (
     <div className="container space-y-10 py-5 md:py-8">
-      {/* ===== HERO BANNER - Full width ===== */}
+      {/* ===== FEATURED STAGE + COMPACT RANKING ===== */}
       {currentHero && (
-        <section aria-label="Truyện nổi bật">
-          <FeaturedMangaCard
-            manga={currentHero}
-            isFirst={heroIndex === 0}
-            onPrev={prevHero}
-            onNext={nextHero}
-            currentIndex={heroIndex}
-            totalSlides={heroSlides.length}
-          />
+        <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]" aria-label="Truyện nổi bật">
+          <div className="min-w-0">
+            <FeaturedMangaCard
+              manga={currentHero}
+              isFirst={heroIndex === 0}
+              onPrev={prevHero}
+              onNext={nextHero}
+              currentIndex={heroIndex}
+              totalSlides={heroSlides.length}
+            />
+          </div>
+
+          {topViews.length > 0 && (
+            <div className="min-w-0 rounded-[18px] bg-card p-4 ring-1 ring-border lg:h-[420px]">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Bảng xếp hạng</p>
+                  <h2 className="mt-0.5 text-lg font-semibold">Đang được săn đón</h2>
+                </div>
+                <Link href="/truyen-hot" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label="Xem tất cả truyện hot">
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </div>
+
+              <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-2 lg:block lg:space-y-1 lg:overflow-visible lg:pb-0">
+                {topViews.map((manga, index) => (
+                  <Link
+                    key={manga.id}
+                    href={`/truyen/${manga.id}`}
+                    className="group flex min-w-[220px] snap-start items-center gap-3 rounded-xl p-2 transition-colors hover:bg-muted lg:min-w-0"
+                  >
+                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg text-sm font-bold ${
+                      index === 0
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    }`}>
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-md bg-muted ring-1 ring-border/70">
+                      <Image
+                        src={getCoverImageUrl(manga.cover)}
+                        alt=""
+                        fill
+                        sizes="40px"
+                        className="object-cover"
+                        priority={index < 2}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold transition-colors group-hover:text-primary">{manga.title}</p>
+                      <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                        <Eye className="h-3 w-3" />
+                        {formatNumber(manga.views)} lượt đọc
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
+      )}
+
+      {/* ===== QUICK GENRE DISCOVERY ===== */}
+      {genres.length > 0 && (
+        <nav
+          aria-label="Khám phá truyện theo thể loại"
+          className="flex flex-col gap-3 border-b border-border pb-5 md:flex-row md:items-center"
+        >
+          <div className="flex shrink-0 items-center gap-2 text-sm font-semibold">
+            <Tag className="h-4 w-4 text-primary" />
+            Khám phá thể loại
+          </div>
+          <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <Link
+              href="/the-loai"
+              className="min-h-10 shrink-0 snap-start rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
+            >
+              Tất cả
+            </Link>
+            {genres.slice(0, 10).map((genre) => (
+              <Link
+                key={genre.id}
+                href={`/the-loai/${genre.slug}`}
+                className="min-h-10 shrink-0 snap-start rounded-full border border-border bg-card px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+              >
+                {genre.name}
+              </Link>
+            ))}
+          </div>
+        </nav>
       )}
 
       {/* ===== CONTINUE READING ===== */}
@@ -318,25 +402,7 @@ export default function Home() {
         {/* ===== MAIN CONTENT (LEFT) ===== */}
         <div className="min-w-0 flex-1 space-y-14">
 
-          {/* ===== Mới Cập Nhật ===== */}
-          <section>
-            <div className="mb-6 flex items-end justify-between gap-4 border-b border-border pb-4">
-              <h2 className="flex items-center gap-2 text-xl font-semibold md:text-2xl">
-                <Clock className="h-5 w-5 text-primary" />
-                Mới Cập Nhật
-              </h2>
-              <Link href="/truyen-moi-cap-nhat" className="flex min-h-11 items-center gap-1 text-sm font-semibold text-primary hover:underline">
-                Xem tất cả <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {latestUpdates.slice(0, 12).map((manga) => (
-                <MangaCard key={manga.id} manga={manga} showBadge="time" />
-              ))}
-            </div>
-          </section>
-
-          {/* ===== Xu Hướng ===== */}
+          {/* ===== Được đọc nhiều ===== */}
           <section>
             <div className="mb-6 flex items-end justify-between gap-4 border-b border-border pb-4">
               <div className="flex items-center gap-2">
@@ -350,6 +416,57 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {trendingManga.slice(0, 12).map((manga) => (
                 <MangaCard key={manga.id} manga={manga} showBadge="views" />
+              ))}
+            </div>
+          </section>
+
+          {/* ===== Mới cập nhật ===== */}
+          <section>
+            <div className="mb-6 flex items-end justify-between gap-4 border-b border-border pb-4">
+              <h2 className="flex items-center gap-2 text-xl font-semibold md:text-2xl">
+                <Clock className="h-5 w-5 text-primary" />
+                Mới cập nhật
+              </h2>
+              <Link href="/truyen-moi-cap-nhat" className="flex min-h-11 items-center gap-1 text-sm font-semibold text-primary hover:underline">
+                Xem tất cả <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="grid gap-x-6 md:grid-cols-2">
+              {latestUpdates.slice(0, 12).map((manga) => (
+                <Link
+                  key={manga.id}
+                  href={`/truyen/${manga.id}`}
+                  className="group flex min-h-24 items-center gap-3 border-b border-border/70 py-3 transition-colors hover:border-primary/40"
+                >
+                  <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded-md bg-muted ring-1 ring-border/70">
+                    <Image
+                      src={getCoverImageUrl(manga.cover)}
+                      alt=""
+                      fill
+                      sizes="48px"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="line-clamp-2 text-sm font-semibold leading-snug transition-colors group-hover:text-primary">
+                      {manga.title}
+                    </h3>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      {manga.chapter != null && (
+                        <span className="rounded-md bg-accent px-2 py-1 font-semibold text-accent-foreground">
+                          Chương {manga.chapter}
+                        </span>
+                      )}
+                      {manga.updatedAt && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {manga.updatedAt}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                </Link>
               ))}
             </div>
           </section>
@@ -377,42 +494,6 @@ export default function Home() {
 
         {/* ===== SIDEBAR (RIGHT) ===== */}
         <aside className="w-full lg:w-72 shrink-0 space-y-4 lg:sticky lg:top-24 lg:self-start">
-          {/* Top Views Ranking */}
-          {topViews.length > 0 && (
-            <div className="border-b border-border pb-5">
-              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold">
-                <Eye className="h-3.5 w-3.5 text-primary" />
-                Top Lượt Xem
-              </h3>
-              <div className="space-y-1">
-                {topViews.map((manga, index) => (
-                  <Link
-                    key={manga.id}
-                    href={`/truyen/${manga.id}`}
-                    className="group flex min-h-11 items-center gap-2 rounded-lg px-1.5 py-2 transition-colors hover:bg-muted"
-                  >
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                      index === 0 ? "bg-yellow-500 text-white" :
-                      index === 1 ? "bg-gray-400 text-white" :
-                      index === 2 ? "bg-amber-700 text-white" :
-                      "bg-muted text-muted-foreground"
-                    }`}>
-                      {index + 1}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate group-hover:text-primary transition-colors">
-                        {manga.title}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {formatNumber(manga.views)} lượt xem
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Truyện đang theo dõi */}
           <div className="border-b border-border pb-5">
             <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold">
