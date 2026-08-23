@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { MessageSquare, Heart, Reply, Edit2, Trash2, Send, ChevronDown, ChevronUp } from "lucide-react";
+import { MessageSquare, Heart, Reply, Edit2, Trash2, Send, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -33,6 +33,8 @@ export default function CommentSection({ mangaId }: CommentSectionProps) {
   const [replyContent, setReplyContent] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [markAsSpoiler, setMarkAsSpoiler] = useState(false);
+  const [revealedSpoilers, setRevealedSpoilers] = useState(() => new Set<string>());
 
   const { data, isLoading } = useQuery({
     queryKey: ["comments", mangaId, page],
@@ -157,7 +159,8 @@ export default function CommentSection({ mangaId }: CommentSectionProps) {
 
   const handleSubmitComment = () => {
     if (!newComment.trim() || !isAuthenticated) return;
-    addMutation.mutate({ content: newComment.trim() });
+    addMutation.mutate({ content: markAsSpoiler ? `[spoiler]${newComment.trim()}[/spoiler]` : newComment.trim() });
+    setMarkAsSpoiler(false);
   };
 
   const handleSubmitReply = (parentId: string) => {
@@ -194,6 +197,8 @@ export default function CommentSection({ mangaId }: CommentSectionProps) {
   const renderComment = (comment: CommentDTO, isReply = false) => {
     const isOwner = isAuthenticated && user?.id === comment.userId;
     const isEditing = editingId === comment.id;
+    const isSpoiler = comment.content.startsWith("[spoiler]") && comment.content.endsWith("[/spoiler]");
+    const visibleContent = isSpoiler ? comment.content.slice(9, -10) : comment.content;
 
     return (
       <div key={comment.id} className={`${isReply ? "ml-10 mt-3" : "border-b pb-4 mb-4 last:border-0"}`}>
@@ -233,7 +238,15 @@ export default function CommentSection({ mangaId }: CommentSectionProps) {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-foreground/90">{comment.content}</p>
+              isSpoiler && !revealedSpoilers.has(comment.id) ? (
+                <button
+                  type="button"
+                  onClick={() => setRevealedSpoilers((current) => new Set(current).add(comment.id))}
+                  className="flex w-full items-center gap-2 rounded-lg bg-muted px-3 py-3 text-left text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <EyeOff className="h-4 w-4" /> Nội dung có spoiler, nhấn để xem
+                </button>
+              ) : <p className="whitespace-pre-wrap text-sm text-foreground/90">{visibleContent}</p>
             )}
 
             <div className="flex items-center gap-3 mt-2">
@@ -337,8 +350,14 @@ export default function CommentSection({ mangaId }: CommentSectionProps) {
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               className="min-h-[80px]"
+              maxLength={2000}
             />
-            <div className="flex justify-end">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+                <input type="checkbox" checked={markAsSpoiler} onChange={(event) => setMarkAsSpoiler(event.target.checked)} className="accent-primary" />
+                Che nội dung spoiler
+              </label>
+              <span className="ml-auto text-xs text-muted-foreground">{newComment.length}/2000</span>
               <Button
                 size="sm"
                 onClick={handleSubmitComment}

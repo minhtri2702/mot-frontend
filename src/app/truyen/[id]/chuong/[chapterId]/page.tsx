@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, useEffect, useRef, useCallback, memo } from "react";
-import { ChevronLeft, ChevronRight, Sun, Moon, Bookmark, BookmarkCheck, Maximize, Minimize, Rows3, PanelsTopLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sun, Moon, Bookmark, BookmarkCheck, Maximize, Minimize, Rows3, PanelsTopLeft, Scaling, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChapterReaderSkeleton } from "@/components/manga-card-skeleton";
 import { getChapterDetail, getMangaDetail } from "@/lib/api";
@@ -10,6 +10,7 @@ import type { ChapterDetailDTO, MangaDetailDTO } from "@/lib/api";
 import { saveReadingHistory } from "@/lib/reading-history";
 
 type ReadingMode = "scroll" | "page";
+type ReaderWidth = "compact" | "comfortable" | "full";
 
 interface SavedReadingPosition {
   pageIndex: number;
@@ -133,12 +134,16 @@ export default function ChapterReaderPage() {
   const [progress, setProgress] = useState(0);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [readerWidth, setReaderWidth] = useState<ReaderWidth>("comfortable");
+  const [loadedPages, setLoadedPages] = useState(() => new Set<number>());
+  const [autoNextCountdown, setAutoNextCountdown] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const progressRAFRef = useRef<number>();
   const savedPositionRef = useRef<SavedReadingPosition | null>(null);
   const exactResumeDoneRef = useRef(false);
   const preloadedImagesRef = useRef(new Set<string>());
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const positionKey = `reading-position-${id}-${chapterId}`;
   const bookmarkKey = `reading-bookmark-${id}-${chapterId}`;
@@ -176,6 +181,12 @@ export default function ChapterReaderPage() {
   }, [chapter]);
 
   const handleImageLoaded = useCallback((index: number) => {
+    setLoadedPages((current) => {
+      if (current.has(index)) return current;
+      const next = new Set(current);
+      next.add(index);
+      return next;
+    });
     preloadAround(index);
     const saved = savedPositionRef.current;
     if (saved && saved.pageIndex === index && !exactResumeDoneRef.current) {
@@ -183,6 +194,10 @@ export default function ChapterReaderPage() {
       requestAnimationFrame(() => restorePosition(saved));
     }
   }, [preloadAround, restorePosition]);
+
+  const cycleReaderWidth = useCallback(() => {
+    setReaderWidth((current) => current === "compact" ? "comfortable" : current === "comfortable" ? "full" : "compact");
+  }, []);
 
   const toggleBookmark = useCallback(() => {
     try {
@@ -216,6 +231,13 @@ export default function ChapterReaderPage() {
   }, [readingBg]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem("mot-reader-mode", readingMode);
+      localStorage.setItem("mot-reader-width", readerWidth);
+    } catch {}
+  }, [readerWidth, readingMode]);
+
+  useEffect(() => {
     const handleFullscreen = () => setIsFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("fullscreenchange", handleFullscreen);
     return () => document.removeEventListener("fullscreenchange", handleFullscreen);
@@ -236,6 +258,10 @@ export default function ChapterReaderPage() {
       setIsBookmarked(localStorage.getItem(bookmarkKey) != null);
       const savedBg = localStorage.getItem("mot-reader-background");
       if (savedBg === "black" || savedBg === "white" || savedBg === "gray") setReadingBg(savedBg);
+      const savedMode = localStorage.getItem("mot-reader-mode");
+      if (savedMode === "scroll" || savedMode === "page") setReadingMode(savedMode);
+      const savedWidth = localStorage.getItem("mot-reader-width");
+      if (savedWidth === "compact" || savedWidth === "comfortable" || savedWidth === "full") setReaderWidth(savedWidth);
     } catch {}
   }, [bookmarkKey, chapter, loading, positionKey, restorePosition]);
 
@@ -323,6 +349,21 @@ export default function ChapterReaderPage() {
       } satisfies SavedReadingPosition));
     } catch {}
   }, [chapter, currentPage, positionKey, readingMode]);
+
+  useEffect(() => {
+    setLoadedPages(new Set());
+    setAutoNextCountdown(null);
+  }, [chapterId]);
+
+  useEffect(() => {
+    if (autoNextCountdown == null || !chapter?.navigation.nextChapterId) return;
+    if (autoNextCountdown <= 0) {
+      window.location.href = `/truyen/${id}/chuong/${chapter.navigation.nextChapterId}`;
+      return;
+    }
+    const timer = window.setTimeout(() => setAutoNextCountdown((value) => value == null ? null : value - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [autoNextCountdown, chapter, id]);
 
   // Fetch data + save reading history
   useEffect(() => {
@@ -414,6 +455,22 @@ export default function ChapterReaderPage() {
 
   const bgClass = readingBg === "black" ? "bg-[#11110f]" : readingBg === "white" ? "bg-[#f5f2eb]" : "bg-[#272624]";
   const chapterTitle = chapter.chapterName || `Chương ${chapter.chapterNumber}`;
+  const readerWidthClass = readerWidth === "compact" ? "max-w-2xl" : readerWidth === "comfortable" ? "max-w-4xl" : "max-w-none";
+
+  const handleTouchStart = (event: React.TouchEvent) => {
+    const touch = event.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent) => {
+    if (readingMode !== "page" || !touchStartRef.current) return;
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - touchStartRef.current.x;
+    const dy = touch.clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.25) return;
+    setCurrentPage((page) => dx < 0 ? Math.min(chapter.imageUrls.length - 1, page + 1) : Math.max(0, page - 1));
+  };
 
   return (
     <div className={`min-h-screen ${bgClass}`}>
@@ -459,6 +516,10 @@ export default function ChapterReaderPage() {
               title={readingMode === "scroll" ? "Chế độ lật trang" : "Chế độ cuộn"}
             >
               {readingMode === "scroll" ? <PanelsTopLeft className="h-4 w-4" /> : <Rows3 className="h-4 w-4" />}
+            </Button>
+
+            <Button variant="ghost" size="icon" onClick={cycleReaderWidth} title="Đổi chiều rộng trang">
+              <Scaling className="h-4 w-4" />
             </Button>
 
             <Button
@@ -514,7 +575,7 @@ export default function ChapterReaderPage() {
 
       {/* Chapter Content - scroll on window */}
       <div className="pb-20 sm:pb-0">
-        <div ref={contentRef} className="mx-auto w-full max-w-4xl sm:px-4">
+        <div ref={contentRef} className={`mx-auto w-full ${readerWidthClass} sm:px-4`}>
           {readingMode === "scroll" ? (
             chapter.imageUrls.length > 0 ? (
               chapter.imageUrls.map((imageUrl, index) => (
@@ -529,12 +590,33 @@ export default function ChapterReaderPage() {
                 />
               ))
             ) : (
-              <div className="flex justify-center py-20">
-                <p className="text-muted-foreground">Không có hình ảnh để hiển thị.</p>
+              <div className="mx-auto flex min-h-[55vh] max-w-lg flex-col items-center justify-center px-5 py-16 text-center">
+                <p className="text-lg font-semibold text-foreground">Chương này chưa có ảnh</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Dữ liệu ảnh đang được cập nhật. Bạn có thể chuyển sang chương khác hoặc quay lại danh sách chương.
+                </p>
+                {manga?.chapters && manga.chapters.length > 0 && (
+                  <select
+                    value={chapter.id}
+                    onChange={(event) => { window.location.href = `/truyen/${id}/chuong/${event.target.value}`; }}
+                    aria-label="Chọn chương khác"
+                    className="mt-5 h-11 w-full rounded-xl border border-border bg-muted px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    {manga.chapters.map((item) => (
+                      <option key={item.id} value={item.id}>{item.chapterName || `Chương ${item.chapterNumber}`}</option>
+                    ))}
+                  </select>
+                )}
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  <Button variant="outline" asChild><Link href={`/truyen/${id}`}>Danh sách chương</Link></Button>
+                  {chapter.navigation.nextChapterId && (
+                    <Button asChild><Link href={`/truyen/${id}/chuong/${chapter.navigation.nextChapterId}`}>Chương sau <ChevronRight className="ml-1 h-4 w-4" /></Link></Button>
+                  )}
+                </div>
               </div>
             )
           ) : (
-            <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
+            <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
               {chapter.imageUrls.length > 0 ? (
                 <>
                   <div className="relative w-full max-w-3xl">
@@ -577,6 +659,12 @@ export default function ChapterReaderPage() {
           )}
         </div>
       </div>
+
+      {chapter.imageUrls.length > 0 && (
+        <div className="fixed bottom-4 left-4 z-40 hidden rounded-full border border-border bg-background/90 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-lg backdrop-blur sm:block">
+          Đã tải {loadedPages.size}/{chapter.imageUrls.length} trang
+        </div>
+      )}
 
       {/* Mobile reader controls stay reachable with one thumb. */}
       <div className={`fixed inset-x-3 bottom-3 z-50 rounded-2xl border border-border bg-background/95 p-1.5 shadow-2xl backdrop-blur transition-transform duration-300 sm:hidden ${headerHidden ? "translate-y-24" : "translate-y-0"}`}>
@@ -644,6 +732,22 @@ export default function ChapterReaderPage() {
               </Button>
             )}
           </div>
+          {chapter.navigation.nextChapterId && (
+            <div className="container flex justify-center pb-5">
+              {autoNextCountdown == null ? (
+                <Button variant="ghost" size="sm" onClick={() => setAutoNextCountdown(5)}>
+                  Tự chuyển chương sau trong 5 giây
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  Chuyển chương sau trong {autoNextCountdown}s
+                  <Button variant="ghost" size="sm" onClick={() => setAutoNextCountdown(null)}>
+                    <RotateCcw className="mr-1 h-3.5 w-3.5" /> Hủy
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

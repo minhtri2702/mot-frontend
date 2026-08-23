@@ -19,13 +19,29 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Mọt Truyện - Manga Reader",
+  metadataBase: new URL("https://mottruyentranh.site"),
+  title: {
+    default: "Mọt Truyện - Đọc manga và truyện tranh online",
+    template: "%s | Mọt Truyện",
+  },
   icons: {
     icon: "/favicon.svg?v=2",
     shortcut: "/favicon.svg?v=2",
     apple: "/favicon.svg?v=2",
   },
-  description: "Đọc truyện tranh, manga, webtoon miễn phí - Mọt Truyện",
+  description: "Đọc manga, truyện tranh và webtoon miễn phí, cập nhật chương mới mỗi ngày tại Mọt Truyện.",
+  applicationName: "Mọt Truyện",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "vi_VN",
+    siteName: "Mọt Truyện",
+    url: "/",
+    title: "Mọt Truyện - Đọc manga và truyện tranh online",
+    description: "Kho truyện tranh cập nhật mỗi ngày, tối ưu trải nghiệm đọc trên mọi thiết bị.",
+  },
+  twitter: { card: "summary_large_image" },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({
@@ -39,8 +55,6 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml" />
         <link rel="shortcut icon" href="/favicon.svg?v=2" />
         <link rel="apple-touch-icon" href="/favicon.svg?v=2" />
-        <link rel="preconnect" href="http://100.94.58.103:9000" />
-        <link rel="dns-prefetch" href="http://100.94.58.103:9000" />
       </head>
       <body className={`${jakarta.variable} ${spaceGrotesk.variable} font-sans`}>
         <ThemeProvider

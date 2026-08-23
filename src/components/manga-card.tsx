@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Star, Clock, Heart, Users, Play } from "lucide-react";
@@ -23,14 +24,12 @@ const MangaCard = memo(function MangaCard({ manga, showBadge = "none", readingPr
   return (
     <Link href={`/truyen/${manga.id}`} className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background">
       <div className="relative mb-2.5 aspect-[3/4] overflow-hidden rounded-xl bg-muted ring-1 ring-border/70 transition duration-200 ease-out group-hover:-translate-y-1 group-hover:shadow-[0_12px_32px_rgba(18,14,10,0.28)] group-hover:ring-primary/35">
-        <img
+        <Image
           src={getCoverImageUrl(manga.cover)}
           alt={manga.title}
-          width="300"
-          height="450"
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 180px"
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-200 ease-out group-hover:scale-[1.025]"
-          loading="lazy"
-          onError={(e) => { e.currentTarget.src = "/placeholder-cover.svg"; }}
         />
 
         <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-[#151515]/90 via-[#151515]/10 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">

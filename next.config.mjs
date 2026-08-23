@@ -3,7 +3,10 @@ const nextConfig = {
   /* config options here */
   output: "standalone",
   images: {
-    unoptimized: true,
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 86400,
+    deviceSizes: [360, 480, 640, 750, 828, 1080, 1200, 1440],
+    imageSizes: [32, 40, 48, 64, 96, 128, 192, 256, 384],
     domains: [
       "source.unsplash.com",
       "images.unsplash.com",
@@ -48,6 +51,13 @@ const nextConfig = {
   },
   async rewrites() {
     return [];
+  },
+  async redirects() {
+    return [
+      { source: "/quoc-gia", destination: "/the-loai", permanent: true },
+      { source: "/quoc-gia/:path*", destination: "/the-loai", permanent: true },
+      { source: "/lich-su-doc", destination: "/profile", permanent: true },
+    ];
   },
 };
 

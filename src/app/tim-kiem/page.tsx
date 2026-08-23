@@ -68,6 +68,10 @@ function SearchPageContent() {
           followers: m.followers,
           likes: m.likes,
           status: m.status,
+          chapter: m.latestChapter,
+          updatedAt: m.latestChapterUpdatedAt || undefined,
+          author: m.author,
+          genres: m.genres.map((name, id) => ({ id, name, slug: name.toLowerCase() })),
         }))
       );
       setTotalPages(data.totalPages);
@@ -79,6 +83,15 @@ function SearchPageContent() {
       setLoading(false);
     }
   }, []);
+
+  const visibleResults = results
+    .filter((manga) => selectedGenre === "all" || manga.genres?.some((genre) => genre.slug === selectedGenre || genre.name.toLowerCase() === selectedGenre))
+    .sort((a, b) => {
+      if (sortBy === "views") return (b.views || 0) - (a.views || 0);
+      if (sortBy === "newest") return new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime();
+      if (sortBy === "oldest") return new Date(a.updatedAt || 0).getTime() - new Date(b.updatedAt || 0).getTime();
+      return 0;
+    });
 
   // Search when query or page changes
   useEffect(() => {
@@ -168,10 +181,10 @@ function SearchPageContent() {
       {/* Results Grid */}
       {loading ? (
         <MangaGridSkeleton count={12} />
-      ) : results.length > 0 ? (
+      ) : visibleResults.length > 0 ? (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {results.map((manga) => (
+            {visibleResults.map((manga) => (
               <MangaCard key={manga.id} manga={manga} showBadge="views" />
             ))}
           </div>

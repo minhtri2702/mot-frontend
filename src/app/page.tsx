@@ -348,36 +348,6 @@ export default function Home() {
         </section>
       )}
 
-      {/* ===== QUICK GENRE DISCOVERY ===== */}
-      {genres.length > 0 && (
-        <nav
-          aria-label="Khám phá truyện theo thể loại"
-          className="flex flex-col gap-2.5 border-b border-border pb-4 md:flex-row md:items-center"
-        >
-          <div className="flex shrink-0 items-center gap-2 text-sm font-semibold">
-            <Tag className="h-4 w-4 text-primary" />
-            Khám phá thể loại
-          </div>
-          <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <Link
-              href="/the-loai"
-              className="min-h-10 shrink-0 snap-start rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
-            >
-              Tất cả
-            </Link>
-            {genres.slice(0, 10).map((genre) => (
-              <Link
-                key={genre.id}
-                href={`/the-loai/${genre.slug}`}
-                className="min-h-10 shrink-0 snap-start rounded-full border border-border bg-card px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
-              >
-                {genre.name}
-              </Link>
-            ))}
-          </div>
-        </nav>
-      )}
-
       {/* ===== CONTINUE READING ===== */}
       {localHistory.length > 0 && (
         <section aria-labelledby="continue-reading-title">
@@ -550,6 +520,19 @@ export default function Home() {
           )}
         </aside>
       </div>
+
+      {/* Thể loại đứng sau các luồng đọc chính để không ngắt hành trình khám phá. */}
+      {genres.length > 0 && (
+        <nav aria-label="Khám phá truyện theo thể loại" className="flex flex-col gap-2.5 border-t border-border pt-5 md:flex-row md:items-center">
+          <div className="flex shrink-0 items-center gap-2 text-sm font-semibold"><Tag className="h-4 w-4 text-primary" />Khám phá thể loại</div>
+          <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <Link href="/the-loai" className="min-h-10 shrink-0 snap-start rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground">Tất cả</Link>
+            {genres.slice(0, 10).map((genre) => (
+              <Link key={genre.id} href={`/the-loai/${genre.slug}`} className="min-h-10 shrink-0 snap-start rounded-full border border-border bg-card px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground">{genre.name}</Link>
+            ))}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

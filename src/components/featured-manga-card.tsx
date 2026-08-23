@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, Play, Heart, ChevronLeft, ChevronRight, Info } from "lucide-react";
@@ -25,15 +26,13 @@ export default function FeaturedMangaCard({
   return (
     <div className="group relative h-[390px] w-full overflow-hidden rounded-[18px] bg-muted ring-1 ring-border md:h-[440px] lg:h-[480px]">
       {/* Background Image */}
-      <img
+      <Image
         src={getCoverImageUrl(manga.cover)}
         alt={manga.title}
-        width="1200"
-        height="480"
-        loading="eager"
-        fetchPriority={isFirst ? "high" : "auto"}
+        fill
+        priority={isFirst}
+        sizes="(max-width: 1024px) 100vw, 75vw"
         className="absolute inset-0 h-full w-full object-cover"
-        onError={(e) => { e.currentTarget.src = "/placeholder-cover.svg"; }}
       />
 
       {/* Cinematic Gradient Overlay */}

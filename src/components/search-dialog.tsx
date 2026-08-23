@@ -79,12 +79,27 @@ export default function SearchDialog() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [loading, setLoading] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const searchSequenceRef = useRef(0);
 
   // Open dialog on Ctrl+K or /
+  useEffect(() => {
+    try { setRecentSearches(JSON.parse(localStorage.getItem("mot-recent-searches") || "[]")); } catch {}
+  }, []);
+
+  const rememberSearch = useCallback((value: string) => {
+    const normalized = value.trim();
+    if (!normalized) return;
+    setRecentSearches((current) => {
+      const next = [normalized, ...current.filter((item) => item.toLowerCase() !== normalized.toLowerCase())].slice(0, 5);
+      try { localStorage.setItem("mot-recent-searches", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -187,11 +202,12 @@ export default function SearchDialog() {
         const selected = results[selectedIndex];
         if (selected) {
           window.location.href = `/truyen/${selected.id}`;
+          rememberSearch(query);
           setIsOpen(false);
         }
       }
     },
-    [results, selectedIndex]
+    [query, rememberSearch, results, selectedIndex]
   );
 
   const closeDialog = useCallback(() => setIsOpen(false), []);
@@ -260,7 +276,7 @@ export default function SearchDialog() {
                   key={item.id}
                   item={item}
                   isSelected={index === selectedIndex}
-                  onSelect={closeDialog}
+                  onSelect={() => { rememberSearch(query); closeDialog(); }}
                   onHighlight={() => setSelectedIndex(index)}
                 />
               ))}
@@ -275,9 +291,9 @@ export default function SearchDialog() {
             </div>
           ) : !query.trim() ? (
             <div className="px-4 py-3">
-              <p className="text-xs text-muted-foreground mb-2">Gợi ý:</p>
+              <p className="text-xs text-muted-foreground mb-2">{recentSearches.length ? "Tìm gần đây:" : "Gợi ý:"}</p>
               <div className="flex flex-wrap gap-2">
-                {["One Piece", "Jujutsu Kaisen", "Chainsaw Man", "Demon Slayer"].map(
+                {(recentSearches.length ? recentSearches : ["One Piece", "Jujutsu Kaisen", "Chainsaw Man", "Demon Slayer"]).map(
                   (suggestion) => (
                     <button
                       key={suggestion}

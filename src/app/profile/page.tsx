@@ -19,7 +19,38 @@ import {
   ChevronRight,
   Clock,
   LogOut,
+  Settings,
 } from "lucide-react";
+
+function ReaderSettingsTab() {
+  const [mode, setMode] = useState("scroll");
+  const [width, setWidth] = useState("comfortable");
+  const [background, setBackground] = useState("black");
+
+  useEffect(() => {
+    setMode(localStorage.getItem("mot-reader-mode") || "scroll");
+    setWidth(localStorage.getItem("mot-reader-width") || "comfortable");
+    setBackground(localStorage.getItem("mot-reader-background") || "black");
+  }, []);
+
+  const save = () => {
+    localStorage.setItem("mot-reader-mode", mode);
+    localStorage.setItem("mot-reader-width", width);
+    localStorage.setItem("mot-reader-background", background);
+  };
+
+  return (
+    <div id="account" className="space-y-6 rounded-xl border bg-card/50 p-5">
+      <div><h2 className="text-lg font-semibold">Cài đặt trình đọc</h2><p className="mt-1 text-sm text-muted-foreground">Áp dụng mặc định trên thiết bị này.</p></div>
+      <div className="grid gap-5 sm:grid-cols-3">
+        <label className="space-y-2 text-sm"><span>Chế độ đọc</span><select value={mode} onChange={(e) => setMode(e.target.value)} className="h-10 w-full rounded-lg border bg-background px-3"><option value="scroll">Đọc dọc</option><option value="page">Lật trang</option></select></label>
+        <label className="space-y-2 text-sm"><span>Chiều rộng ảnh</span><select value={width} onChange={(e) => setWidth(e.target.value)} className="h-10 w-full rounded-lg border bg-background px-3"><option value="compact">Gọn</option><option value="comfortable">Vừa màn hình</option><option value="full">Toàn chiều rộng</option></select></label>
+        <label className="space-y-2 text-sm"><span>Nền đọc</span><select value={background} onChange={(e) => setBackground(e.target.value)} className="h-10 w-full rounded-lg border bg-background px-3"><option value="black">Đen</option><option value="gray">Xám</option><option value="white">Sáng</option></select></label>
+      </div>
+      <Button onClick={save}>Lưu cài đặt</Button>
+    </div>
+  );
+}
 
 // ===== Tab: Thông tin cá nhân =====
 
@@ -480,7 +511,7 @@ export default function ProfilePage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="w-full sm:w-auto grid grid-cols-3 sm:inline-flex">
+          <TabsList className="w-full sm:w-auto grid grid-cols-4 sm:inline-flex">
             <TabsTrigger value="overview" className="gap-1.5">
               <User className="h-4 w-4" />
               <span>Tổng quan</span>
@@ -492,6 +523,10 @@ export default function ProfilePage() {
             <TabsTrigger value="comments" className="gap-1.5">
               <MessageSquare className="h-4 w-4" />
               <span>Bình luận</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="gap-1.5">
+              <Settings className="h-4 w-4" />
+              <span>Cài đặt</span>
             </TabsTrigger>
           </TabsList>
 
@@ -505,6 +540,10 @@ export default function ProfilePage() {
 
           <TabsContent value="comments">
             <CommentsTab userId={user.id} />
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <ReaderSettingsTab />
           </TabsContent>
         </Tabs>
       </div>
