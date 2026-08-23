@@ -38,7 +38,7 @@ function useLatestUpdates() {
 function useHotManga() {
   return useQuery({
     queryKey: ["hot-manga"],
-    queryFn: () => getHotManga(0, 24).catch(() => ({ content: [], page: 0, size: 24, totalElements: 0, totalPages: 0, last: true, first: true })),
+    queryFn: () => getHotManga(0, 40).catch(() => ({ content: [], page: 0, size: 40, totalElements: 0, totalPages: 0, last: true, first: true })),
     staleTime: 2 * 60 * 1000,
   });
 }
@@ -390,7 +390,7 @@ export default function Home() {
               </Link>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
-              {trendingManga.slice(0, 18).map((manga) => (
+              {trendingManga.slice(0, 35).map((manga) => (
                 <MangaCard
                   key={manga.id}
                   manga={manga}
