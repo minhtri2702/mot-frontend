@@ -50,7 +50,14 @@ const nextConfig = {
     ],
   },
   async rewrites() {
-    return [];
+    const internalApiUrl = process.env.INTERNAL_API_URL || "http://product-services:8080";
+
+    return [
+      {
+        source: "/api/v1/images/:path*",
+        destination: `${internalApiUrl}/api/v1/images/:path*`,
+      },
+    ];
   },
   async redirects() {
     return [
