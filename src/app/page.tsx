@@ -98,28 +98,28 @@ function toCardData(m: MangaSummaryDTO): MangaCardData {
 
 function ReadingHistoryItem({ item, onRemove }: { item: ReadingHistoryEntry; onRemove: (mangaId: string) => void }) {
   return (
-    <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors group">
+    <div className="group flex items-center gap-3 rounded-xl border bg-card/60 p-3 transition-colors hover:bg-card">
       <Link
         href={`/truyen/${item.mangaId}/chuong/${item.chapterId}`}
-        className="flex gap-2 flex-1 min-w-0"
+        className="flex min-w-0 flex-1 gap-3"
       >
-        <div className="w-8 h-11 rounded overflow-hidden flex-shrink-0 relative bg-muted">
+        <div className="relative h-16 w-12 flex-shrink-0 overflow-hidden rounded-md bg-muted">
           <img
             src={getCoverImageUrl(item.coverImagePath)}
             alt={item.mangaTitle}
             className="absolute inset-0 w-full h-full object-cover"
-            loading="eager"
+            loading="lazy"
             onError={(e) => { e.currentTarget.src = "/placeholder-cover.svg"; }}
           />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+          <p className="line-clamp-2 text-sm font-medium transition-colors group-hover:text-primary">
             {item.mangaTitle}
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
             Chương {item.chapterNumber}
             {item.chapterName ? `: ${item.chapterName}` : ""}
-            <span className="ml-2 text-[10px] text-muted-foreground/60">
+            <span className="ml-2 text-xs text-muted-foreground/70">
               {formatRelativeTime(item.lastReadDate)}
             </span>
           </p>
@@ -130,7 +130,8 @@ function ReadingHistoryItem({ item, onRemove }: { item: ReadingHistoryEntry; onR
           e.preventDefault();
           onRemove(item.mangaId);
         }}
-        className="shrink-0 text-xs text-muted-foreground/50 hover:text-destructive transition-colors p-1"
+        className="shrink-0 rounded-md p-2 text-xs text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        aria-label={`Xoá ${item.mangaTitle} khỏi lịch sử`}
         title="Xoá khỏi lịch sử"
       >
         ✕
@@ -298,6 +299,30 @@ export default function Home() {
         </section>
       )}
 
+      {/* ===== CONTINUE READING ===== */}
+      {localHistory.length > 0 && (
+        <section aria-labelledby="continue-reading-title">
+          <div className="mb-4 flex items-end justify-between gap-4">
+            <div>
+              <h2 id="continue-reading-title" className="flex items-center gap-2 text-xl font-bold md:text-2xl">
+                <History className="h-5 w-5 text-primary" />
+                Đọc tiếp
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">Quay lại đúng chương bạn đang đọc dở.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {localHistory.slice(0, 4).map((item) => (
+              <ReadingHistoryItem
+                key={`${item.mangaId}-${item.chapterId}`}
+                item={item}
+                onRemove={removeFromHistory}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ===== TWO-COLUMN LAYOUT: Main + Sidebar ===== */}
       <div className="flex flex-col lg:flex-row gap-8">
 
@@ -398,25 +423,6 @@ export default function Home() {
               </div>
             </div>
           )}
-
-          {/* Lịch Sử Đọc Truyện */}
-          <div className="rounded-lg border bg-card/80 backdrop-blur-sm p-3">
-            <h3 className="font-semibold text-sm mb-2 flex items-center gap-1.5">
-              <History className="h-3.5 w-3.5 text-primary" />
-              Lịch Sử Đọc
-            </h3>
-            {localHistory.length > 0 ? (
-              <div className="space-y-1">
-                {localHistory.slice(0, 5).map((item) => (
-                  <ReadingHistoryItem key={`${item.mangaId}-${item.chapterId}`} item={item} onRemove={removeFromHistory} />
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground text-center py-3">
-                Bạn chưa đọc truyện nào
-              </p>
-            )}
-          </div>
 
           {/* Truyện đang theo dõi */}
           <div className="rounded-lg border bg-card/80 backdrop-blur-sm p-3">

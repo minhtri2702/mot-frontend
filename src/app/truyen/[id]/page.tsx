@@ -113,9 +113,9 @@ export default function MangaDetailPage() {
         {/* Main Content */}
         <div className="flex-1 space-y-8 min-w-0">
           {/* Manga Detail Header */}
-          <div className="flex flex-col md:flex-row gap-8">
+          <div className="flex flex-col gap-6 md:flex-row md:gap-8">
             {/* Cover Image - optimized for LCP */}
-            <div className="w-full md:w-64 flex-shrink-0">
+            <div className="mx-auto w-48 flex-shrink-0 sm:w-56 md:mx-0 md:w-64">
               <div className="aspect-[3/4] rounded-lg overflow-hidden shadow-lg relative bg-muted" style={{ minHeight: '256px' }}>
                 {/* Preload hint for LCP image */}
                 <link rel="preload" as="image" href={getCoverImageUrl(manga.coverImagePath)} />
@@ -147,7 +147,7 @@ export default function MangaDetailPage() {
                 ))}
               </div>
 
-              <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   <span className="font-medium text-foreground">{manga.likes}</span>
@@ -162,7 +162,7 @@ export default function MangaDetailPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 text-sm">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                 <div className="flex items-center gap-1">
                   <BookOpen className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Tác giả:</span>
@@ -190,7 +190,7 @@ export default function MangaDetailPage() {
                 {manga.description}
               </p>
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-wrap gap-3 pt-2">
                 {manga.chapters.length > 0 && (
                   <>
                     {lastReadChapterId != null && lastReadChapterNumber != null && (

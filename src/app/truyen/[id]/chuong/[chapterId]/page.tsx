@@ -317,7 +317,7 @@ export default function ChapterReaderPage() {
 
       {/* Chapter Content - scroll on window */}
       <div>
-        <div ref={contentRef} className="max-w-4xl mx-auto px-4 sm:px-6 w-[90%]">
+        <div ref={contentRef} className="mx-auto w-full max-w-4xl sm:px-4">
           {readingMode === "scroll" ? (
             chapter.imageUrls.length > 0 ? (
               chapter.imageUrls.map((imageUrl, index) => (

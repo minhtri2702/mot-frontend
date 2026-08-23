@@ -5,9 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/lib/auth";
 import { QueryProvider } from "@/lib/query-provider";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
-import AIChatbot from "@/components/ai-chatbot";
+import AppShell from "@/components/app-shell";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -53,15 +51,10 @@ export default function RootLayout({
         >
           <QueryProvider>
             <AuthProvider>
-              <div className="min-h-screen flex flex-col">
-                <Header />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
+              <AppShell>{children}</AppShell>
             </AuthProvider>
           </QueryProvider>
           <Toaster />
-          <AIChatbot />
         </ThemeProvider>
       </body>
     </html>
