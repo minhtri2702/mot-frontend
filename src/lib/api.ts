@@ -631,3 +631,72 @@ export async function getChaptersWithoutImages(page = 0, size = 25): Promise<Pag
     { auth: true, skipCache: true },
   );
 }
+
+export interface CrawlRepairJobDTO {
+  id: string;
+  chapterId: number;
+  status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+  imagesDownloaded: number;
+  errorMessage?: string;
+}
+
+export interface ChapterReportDTO {
+  id: number;
+  chapterId: number;
+  userId: string;
+  reason: string;
+  pageIndex?: number;
+  details?: string;
+  status: string;
+  createdAt: string;
+}
+
+export async function enqueueCrawlRepair(chapterId: number, reportId?: number): Promise<CrawlRepairJobDTO> {
+  const query = reportId ? `?reportId=${reportId}` : "";
+  return cachedFetch<CrawlRepairJobDTO>(`${API_BASE_URL}/admin/crawl-repairs/${chapterId}${query}`, {
+    method: "POST", auth: true, skipCache: true,
+  });
+}
+
+export async function getCrawlRepairJob(jobId: string): Promise<CrawlRepairJobDTO> {
+  return cachedFetch(`${API_BASE_URL}/admin/crawl-repairs/jobs/${jobId}`, {
+    auth: true, skipCache: true,
+  });
+}
+
+export async function getChapterReports(size = 10): Promise<PagedResponseDTO<ChapterReportDTO>> {
+  return cachedFetch(`${API_BASE_URL}/admin/chapter-reports?size=${size}`, { auth: true, skipCache: true });
+}
+
+export async function submitChapterReport(chapterId: number, request: {
+  reason: string; pageIndex?: number; details?: string;
+}): Promise<void> {
+  await cachedFetch(`${API_BASE_URL}/chapters/${chapterId}/reports`, {
+    method: "POST", body: JSON.stringify(request), auth: true, skipCache: true,
+  });
+}
+
+export interface UserNotificationDTO {
+  id: number;
+  mangaId: string;
+  chapterId: number;
+  type: "NEW_CHAPTER";
+  title: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export async function getNotifications(size = 12): Promise<PagedResponseDTO<UserNotificationDTO>> {
+  return cachedFetch(`${API_BASE_URL}/notifications?size=${size}`, { auth: true, skipCache: true });
+}
+
+export async function getUnreadNotificationCount(): Promise<number> {
+  const result = await cachedFetch<{ count: number }>(`${API_BASE_URL}/notifications/unread-count`, {
+    auth: true, skipCache: true,
+  });
+  return result.count;
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await cachedFetch(`${API_BASE_URL}/notifications/read-all`, { method: "POST", auth: true, skipCache: true });
+}

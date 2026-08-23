@@ -23,6 +23,7 @@ import { Menu, Search, User, ChevronDown, BookOpen, Clock, Heart, BarChart, Sun,
 import SearchDialog from "@/components/search-dialog";
 import { useAuth } from "@/lib/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import NotificationMenu from "@/components/notification-menu";
 
 function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
@@ -330,6 +331,7 @@ export default function Header() {
             <SearchDialog />
 
             <ThemeToggle />
+            <NotificationMenu />
             <Link href="/truyen-yeu-thich">
               <Button variant="ghost" size="icon" title="Truyện yêu thích" className="hidden sm:inline-flex">
                 <Heart className="h-5 w-5" />

@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle, BookImage, ChevronLeft, ChevronRight, Copy, ImageOff, RefreshCw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import {
   getChaptersWithoutImages,
   getDataHealthSummary,
+  enqueueCrawlRepair,
+  getChapterReports,
+  getCrawlRepairJob,
+  type ChapterReportDTO,
   type DataHealthIssueDTO,
   type DataHealthSummaryDTO,
 } from "@/lib/api";
@@ -23,6 +27,9 @@ export default function DataHealthPage() {
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [repairing, setRepairing] = useState<Record<number, string>>({});
+  const [reports, setReports] = useState<ChapterReportDTO[]>([]);
+  const pollTimers = useRef(new Set<ReturnType<typeof setTimeout>>());
 
   const isAdmin = Boolean(user?.roles.includes("ROLE_ADMIN"));
 
@@ -31,14 +38,16 @@ export default function DataHealthPage() {
     setLoading(true);
     setError(null);
     try {
-      const [summaryData, issueData] = await Promise.all([
+      const [summaryData, issueData, reportData] = await Promise.all([
         getDataHealthSummary(),
         getChaptersWithoutImages(page, PAGE_SIZE),
+        getChapterReports(),
       ]);
       setSummary(summaryData);
       setIssues(issueData.content);
       setTotalPages(issueData.totalPages);
       setTotalElements(issueData.totalElements);
+      setReports(reportData.content);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Không thể kiểm tra dữ liệu.");
     } finally {
@@ -47,6 +56,7 @@ export default function DataHealthPage() {
   }, [isAdmin, page]);
 
   useEffect(() => { void loadHealth(); }, [loadHealth]);
+  useEffect(() => () => { pollTimers.current.forEach(clearTimeout); }, []);
 
   if (authLoading) {
     return <div className="container py-16 text-sm text-muted-foreground">Đang kiểm tra quyền truy cập...</div>;
@@ -79,6 +89,58 @@ export default function DataHealthPage() {
     { label: "Trang bị trùng thứ tự", value: summary?.duplicatePageOrders, icon: Copy },
     { label: "Truyện chưa có bìa", value: summary?.mangaWithoutCover, icon: AlertTriangle },
   ];
+
+  async function repairChapter(chapterId: number, reportId?: number) {
+    setRepairing((current) => ({ ...current, [chapterId]: "Đang xếp hàng…" }));
+    try {
+      const job = await enqueueCrawlRepair(chapterId, reportId);
+      setRepairing((current) => ({ ...current, [chapterId]: labelForJob(job.status) }));
+      if (job.status === "QUEUED" || job.status === "RUNNING") pollJob(job.id, chapterId, 0);
+    } catch {
+      setRepairing((current) => ({ ...current, [chapterId]: "Không thể gửi" }));
+    }
+  }
+
+  function labelForJob(status: string) {
+    if (status === "RUNNING") return "Đang crawl…";
+    if (status === "SUCCEEDED") return "Hoàn tất";
+    if (status === "FAILED") return "Thất bại";
+    return "Đã xếp hàng";
+  }
+
+  function pollJob(jobId: string, chapterId: number, attempt: number) {
+    if (attempt >= 60) {
+      setRepairing((current) => ({ ...current, [chapterId]: "Quá thời gian" }));
+      clearRepairLabel(chapterId);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      pollTimers.current.delete(timer);
+      try {
+        const job = await getCrawlRepairJob(jobId);
+        setRepairing((current) => ({ ...current, [chapterId]: labelForJob(job.status) }));
+        if (job.status === "QUEUED" || job.status === "RUNNING") {
+          pollJob(jobId, chapterId, attempt + 1);
+        } else if (job.status === "SUCCEEDED") {
+          await loadHealth();
+        } else {
+          clearRepairLabel(chapterId);
+        }
+      } catch {
+        pollJob(jobId, chapterId, attempt + 1);
+      }
+    }, 5000);
+    pollTimers.current.add(timer);
+  }
+
+  function clearRepairLabel(chapterId: number) {
+    const timer = setTimeout(() => setRepairing((current) => {
+      const next = { ...current };
+      delete next[chapterId];
+      return next;
+    }), 4000);
+    pollTimers.current.add(timer);
+  }
 
   return (
     <main className="container py-6 md:py-10">
@@ -128,7 +190,14 @@ export default function DataHealthPage() {
                     <td className="px-4 py-3 font-medium">{issue.mangaTitle}</td>
                     <td className="px-4 py-3 text-muted-foreground">{issue.chapterName || `Chương ${issue.chapterNumber}`}</td>
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{issue.chapterId}</td>
-                    <td className="px-4 py-3 text-right"><Button variant="ghost" size="sm" asChild><Link href={`/truyen/${issue.mangaId}/chuong/${issue.chapterId}`}>Mở chapter</Link></Button></td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" asChild><Link href={`/truyen/${issue.mangaId}/chuong/${issue.chapterId}`}>Mở chapter</Link></Button>
+                        <Button size="sm" onClick={() => void repairChapter(issue.chapterId)} disabled={Boolean(repairing[issue.chapterId])}>
+                          <RefreshCw className="mr-1.5 h-3.5 w-3.5" />{repairing[issue.chapterId] || "Crawl lại"}
+                        </Button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {!loading && issues.length === 0 && <tr><td colSpan={4} className="px-4 py-12 text-center text-muted-foreground">Không phát hiện chapter thiếu ảnh.</td></tr>}
@@ -141,6 +210,24 @@ export default function DataHealthPage() {
           <Button variant="outline" size="sm" disabled={page === 0 || loading} onClick={() => setPage((value) => value - 1)}><ChevronLeft className="mr-1 h-4 w-4" /> Trước</Button>
           <span className="px-2 text-xs text-muted-foreground">Trang {totalPages === 0 ? 0 : page + 1}/{totalPages}</span>
           <Button variant="outline" size="sm" disabled={page + 1 >= totalPages || loading} onClick={() => setPage((value) => value + 1)}>Sau <ChevronRight className="ml-1 h-4 w-4" /></Button>
+        </div>
+      </section>
+
+      <section className="mt-10 border-t border-border pt-7" aria-labelledby="reader-reports-title">
+        <h2 id="reader-reports-title" className="text-xl font-semibold">Người đọc báo lỗi</h2>
+        <p className="mt-1 text-sm text-muted-foreground">10 báo cáo gần nhất; crawler vẫn xử lý tuần tự qua Kafka.</p>
+        <div className="mt-4 overflow-hidden rounded-xl border border-border">
+          {reports.map((report) => (
+            <div key={report.id} className="grid gap-2 border-b border-border px-4 py-3 text-sm last:border-0 md:grid-cols-[7rem_8rem_1fr_auto] md:items-center">
+              <span className="font-mono text-xs text-muted-foreground">Chapter {report.chapterId}</span>
+              <span className="font-medium">{report.reason.replaceAll("_", " ")}</span>
+              <span className="truncate text-muted-foreground">{report.details || `Trang ${(report.pageIndex ?? 0) + 1}`} · {new Date(report.createdAt).toLocaleString("vi-VN")}</span>
+              <Button size="sm" variant={report.status === "RESOLVED" ? "outline" : "default"} disabled={report.status === "RESOLVED" || Boolean(repairing[report.chapterId])} onClick={() => void repairChapter(report.chapterId, report.id)}>
+                {report.status === "RESOLVED" ? "Đã xử lý" : repairing[report.chapterId] || "Crawl lại"}
+              </Button>
+            </div>
+          ))}
+          {reports.length === 0 && <p className="px-4 py-10 text-center text-sm text-muted-foreground">Chưa có báo cáo từ người đọc.</p>}
         </div>
       </section>
     </main>

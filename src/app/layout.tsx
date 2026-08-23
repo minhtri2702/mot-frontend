@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/lib/auth";
 import { QueryProvider } from "@/lib/query-provider";
 import AppShell from "@/components/app-shell";
+import PwaRegister from "@/components/pwa-register";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -65,6 +66,7 @@ export default function RootLayout({
         >
           <QueryProvider>
             <AuthProvider>
+              <PwaRegister />
               <AppShell>{children}</AppShell>
             </AuthProvider>
           </QueryProvider>

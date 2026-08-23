@@ -2,10 +2,10 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, useEffect, useRef, useCallback, memo } from "react";
-import { ChevronLeft, ChevronRight, Sun, Moon, Bookmark, BookmarkCheck, Maximize, Minimize, Rows3, PanelsTopLeft, Scaling, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sun, Moon, Bookmark, BookmarkCheck, Maximize, Minimize, Rows3, PanelsTopLeft, Scaling, RotateCcw, MessageSquareWarning } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChapterReaderSkeleton } from "@/components/manga-card-skeleton";
-import { getChapterDetail, getMangaDetail } from "@/lib/api";
+import { getChapterDetail, getMangaDetail, submitChapterReport } from "@/lib/api";
 import type { ChapterDetailDTO, MangaDetailDTO } from "@/lib/api";
 import { saveReadingHistory } from "@/lib/reading-history";
 
@@ -160,6 +160,10 @@ export default function ChapterReaderPage() {
   const [autoNextCancelled, setAutoNextCancelled] = useState(false);
   const [pageImageFailed, setPageImageFailed] = useState(false);
   const [pageImageRetry, setPageImageRetry] = useState(0);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("MISSING_IMAGE");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportStatus, setReportStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const contentRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const progressRAFRef = useRef<number>();
@@ -171,6 +175,22 @@ export default function ChapterReaderPage() {
 
   const positionKey = `reading-position-${id}-${chapterId}`;
   const bookmarkKey = `reading-bookmark-${id}-${chapterId}`;
+
+  async function sendChapterReport() {
+    if (!chapter) return;
+    setReportStatus("sending");
+    try {
+      await submitChapterReport(chapter.id, {
+        reason: reportReason,
+        pageIndex: readingMode === "page" ? currentPage : visiblePage,
+        details: reportDetails.trim() || undefined,
+      });
+      setReportStatus("sent");
+      setReportDetails("");
+    } catch {
+      setReportStatus("error");
+    }
+  }
 
   const getCurrentPosition = useCallback((): SavedReadingPosition => {
     const anchorY = window.innerHeight * 0.28;
@@ -741,6 +761,27 @@ export default function ChapterReaderPage() {
           </Button>
         </div>
       )}
+
+      <section className="mx-auto w-full max-w-3xl px-4 py-6" aria-label="Báo lỗi chapter">
+        <button type="button" onClick={() => setReportOpen((value) => !value)} className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+          <MessageSquareWarning className="h-4 w-4" /> Báo chapter thiếu hoặc sai ảnh
+        </button>
+        {reportOpen && (
+          <div className="mt-3 rounded-xl border border-border bg-muted/40 p-4">
+            <div className="grid gap-3 sm:grid-cols-[12rem_1fr_auto]">
+              <select value={reportReason} onChange={(event) => setReportReason(event.target.value)} className="h-10 rounded-lg border border-border bg-background px-3 text-sm">
+                <option value="MISSING_IMAGE">Thiếu ảnh</option><option value="WRONG_ORDER">Sai thứ tự</option>
+                <option value="DUPLICATE_IMAGE">Trùng ảnh</option><option value="BLURRY_IMAGE">Ảnh mờ</option>
+                <option value="WRONG_CHAPTER">Sai chapter</option><option value="OTHER">Lỗi khác</option>
+              </select>
+              <input value={reportDetails} onChange={(event) => setReportDetails(event.target.value)} maxLength={500} placeholder="Mô tả thêm (không bắt buộc)" className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+              <Button onClick={() => void sendChapterReport()} disabled={reportStatus === "sending"}>{reportStatus === "sending" ? "Đang gửi…" : "Gửi báo lỗi"}</Button>
+            </div>
+            {reportStatus === "sent" && <p className="mt-2 text-xs text-emerald-500">Đã gửi. Quản trị viên có thể xếp chapter này vào hàng crawl lại.</p>}
+            {reportStatus === "error" && <p className="mt-2 text-xs text-destructive">Không gửi được. Hãy đăng nhập rồi thử lại.</p>}
+          </div>
+        )}
+      </section>
 
       {/* Mobile reader controls stay reachable with one thumb. */}
       <div className={`fixed inset-x-3 bottom-3 z-50 rounded-2xl border border-border bg-background/95 p-1.5 shadow-2xl backdrop-blur transition-transform duration-300 sm:hidden ${headerHidden ? "translate-y-24" : "translate-y-0"}`}>
