@@ -4,8 +4,9 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import MangaCard from "@/components/manga-card";
 import { MangaGridSkeleton } from "@/components/manga-card-skeleton";
-import { searchManga } from "@/lib/api";
+import { formatRelativeTime, searchManga } from "@/lib/api";
 import type { MangaSummaryDTO } from "@/lib/api";
+import type { MangaCardData } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { Globe } from "lucide-react";
 import {
@@ -18,6 +19,23 @@ import {
 } from "@/components/ui/pagination";
 
 const ITEMS_PER_PAGE = 24;
+
+function toCardData(manga: MangaSummaryDTO): MangaCardData {
+  return {
+    id: manga.id,
+    stt: manga.stt,
+    title: manga.title,
+    cover: manga.coverImagePath,
+    description: manga.description || "",
+    author: manga.author || "",
+    views: manga.views,
+    followers: manga.followers,
+    likes: manga.likes,
+    chapter: manga.latestChapter,
+    updatedAt: formatRelativeTime(manga.latestChapterUpdatedAt),
+    status: manga.status,
+  };
+}
 
 const COUNTRY_MAP: Record<string, string> = {
   "nhat-ban": "Nhật Bản",
@@ -64,7 +82,7 @@ export default function CountryPage() {
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {mangaList.map((manga: MangaSummaryDTO) => (
-              <MangaCard key={manga.id} manga={manga} />
+              <MangaCard key={manga.id} manga={toCardData(manga)} />
             ))}
           </div>
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, Eye, Play, Heart, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, Play, Heart, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { getCoverImageUrl, formatNumber } from "@/lib/api";
 import type { FeaturedMangaData } from "@/lib/types";
 
@@ -45,13 +45,15 @@ export default function FeaturedMangaCard({
         <>
           <button
             onClick={onPrev}
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/15 transition-all duration-200 opacity-0 group-hover:opacity-100"
+            aria-label="Truyện đề xuất trước"
+            className="absolute left-3 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white/80 opacity-80 backdrop-blur-sm transition-all duration-200 hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={onNext}
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/15 transition-all duration-200 opacity-0 group-hover:opacity-100"
+            aria-label="Truyện đề xuất tiếp theo"
+            className="absolute right-3 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white/80 opacity-80 backdrop-blur-sm transition-all duration-200 hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -64,6 +66,7 @@ export default function FeaturedMangaCard({
           {Array.from({ length: totalSlides }).map((_, i) => (
             <div
               key={i}
+              aria-hidden="true"
               className={`h-1 rounded-full transition-all duration-300 ${
                 i === currentIndex ? "w-6 bg-[#EF4444]" : "w-1.5 bg-white/40"
               }`}
@@ -78,8 +81,8 @@ export default function FeaturedMangaCard({
           {/* Rating & Meta */}
           <div className="flex items-center gap-3 mb-3">
             <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-              <span className="text-sm font-semibold text-white">{manga.likes ?? 9.5}</span>
+              <Heart className="h-4 w-4 fill-red-400 text-red-400" />
+              <span className="text-sm font-semibold text-white">{formatNumber(manga.likes)}</span>
             </div>
             <div className="flex items-center gap-1 text-white/60 text-xs">
               <Eye className="h-3.5 w-3.5" />
@@ -116,25 +119,21 @@ export default function FeaturedMangaCard({
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3 animate-slide-in-up">
-            <Link href={`/truyen/${manga.id}`}>
-              <Button asChild className="bg-[#EF4444] hover:bg-[#DC2626] text-white px-5 py-2 rounded-full font-medium text-sm transition-all duration-200 shadow-lg shadow-[#EF4444]/20 hover:shadow-[#EF4444]/30 hover:scale-105 active:scale-95">
-                <a>
+            <Button asChild className="bg-[#EF4444] hover:bg-[#DC2626] text-white px-5 py-2 rounded-full font-medium text-sm transition-all duration-200 shadow-lg shadow-[#EF4444]/20 hover:shadow-[#EF4444]/30 hover:scale-105 active:scale-95">
+              <Link href={`/truyen/${manga.id}`}>
                   <Play className="h-4 w-4 mr-1.5 fill-current" />
                   Đọc ngay
-                </a>
-              </Button>
-            </Link>
-            <Link href={`/truyen/${manga.id}`}>
-              <Button asChild
+              </Link>
+            </Button>
+            <Button asChild
                 variant="outline"
                 className="border-white/25 text-white/80 hover:bg-white/10 hover:text-white px-5 py-2 rounded-full font-medium text-sm transition-all duration-200 hover:scale-105 active:scale-95"
               >
-                <a>
-                  <Heart className="h-4 w-4 mr-1.5 fill-current text-red-400" />
-                  Yêu thích
-                </a>
-              </Button>
-            </Link>
+              <Link href={`/truyen/${manga.id}`}>
+                <Info className="h-4 w-4 mr-1.5" />
+                Chi tiết
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

@@ -22,9 +22,9 @@ export default function LoiNgoPage() {
         {/* Content */}
         <article className="flex-1 space-y-2 overflow-hidden text-[10.5px] leading-[1.45] text-muted-foreground sm:text-xs sm:leading-5 md:space-y-4 md:overflow-visible md:text-sm md:leading-7">
           <p>
-            Dạo này vừa ốm vừa lười nên mãi không xong đuợc, mình nghĩ về nó lần đầu vào những ngày đầu năm 2014 nhưng về sau mải chuyện đi học, rồi chuyện đi làm nên giờ mới hòm hòm. Mãi mình vẫn nhớ về  một góc nhỏ ở Mọt Coffee, quán cà phê sách giữa lòng Hà Nội.
+            Mình mãi vẫn nhớ về  một góc nhỏ ở Mọt Coffee, quán cà phê sách giữa lòng Hà Nội.
             <br />
-            Trên bàn, cốc bơ già thảo mộc vẫn còn nghi ngút khói, cuốn Rừng Na Uy nằm mở, radio vang lên giai điệu Mary on a Cross
+            Trên bàn, cốc bơ già thảo mộc vẫn còn nghi ngút khói, cuốn Rừng Na Uy nằm mở, radio vang lên giai điệu Mary on a Cross. Đó là lý do mình đặt tên cho nó.
           </p>
           <p>Mình làm ra nó không phải vì mục đích gì cả, UI cũng không quá xịn, tốc độ cũng không quá nhanh vậy nên nó sẽ hoàn toàn miễn phí.</p>
           <p className="border-l-2 border-red-500/40 pl-3 text-foreground">

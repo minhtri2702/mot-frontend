@@ -1,13 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    // Disable TypeScript errors during build
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    // Disable ESLint during build (warnings about <img> tag are not critical)
-    ignoreDuringBuilds: true,
-  },
   /* config options here */
   images: {
     unoptimized: true,

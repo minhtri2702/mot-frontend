@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -101,7 +100,7 @@ function UserMenu() {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 bg-[#18181B]/95 backdrop-blur-xl border border-white/[0.08]">
+      <DropdownMenuContent align="end" className="w-56 bg-popover/95 backdrop-blur-xl">
         <div className="flex items-center gap-2 px-2 py-1.5">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user.avatarUrl || undefined} alt={user.username} />
@@ -114,10 +113,18 @@ function UserMenu() {
             <span className="text-xs text-muted-foreground truncate max-w-[150px]">{user.email}</span>
           </div>
         </div>
+        <DropdownMenuItem asChild>
+          <Link href="/profile">
+            <User className="h-4 w-4 mr-2" />
+            Trang cá nhân
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <Settings className="h-4 w-4 mr-2" />
-          Cài đặt tài khoản
+        <DropdownMenuItem asChild>
+          <Link href="/profile#account">
+            <Settings className="h-4 w-4 mr-2" />
+            Thông tin tài khoản
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/truyen-yeu-thich">
@@ -125,11 +132,6 @@ function UserMenu() {
             Truyện yêu thích
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Clock className="h-4 w-4 mr-2" />
-          Lịch sử đọc
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/loi-ngo">
             <BookOpen className="h-4 w-4 mr-2" />
@@ -157,7 +159,7 @@ function MobileNav() {
           <span className="sr-only">Menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[280px] sm:w-[320px] bg-[#18181B]/95 backdrop-blur-xl border-r border-white/[0.08]">
+      <SheetContent side="left" className="w-[280px] bg-background/95 backdrop-blur-xl sm:w-[320px]">
         <SheetHeader className="border-b pb-4 mb-4">
           <SheetTitle className="flex items-center">
             <BookOpen className="h-5 w-5 text-primary mr-2" />
@@ -236,8 +238,8 @@ export default function Header() {
         <div className="flex items-center">
           <Link href="/" className="flex items-center mr-6">
             <BookOpen className="h-6 w-6 text-primary mr-2" />
-            <span className="font-bold text-xl hidden sm:inline-block">Mọt Truyện</span>
-            <span className="font-bold text-xl sm:hidden">GTT</span>
+            <span className="hidden text-xl font-bold sm:inline-block">Mọt Truyện</span>
+            <span className="text-lg font-bold sm:hidden">Mọt</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -248,7 +250,7 @@ export default function Header() {
                   Thể loại <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-[#18181B]/95 backdrop-blur-xl border border-white/[0.08]">
+              <DropdownMenuContent className="bg-popover/95 backdrop-blur-xl">
                 <DropdownMenuItem>
                   <Link href="/the-loai/action">Action</Link>
                 </DropdownMenuItem>
@@ -263,23 +265,6 @@ export default function Header() {
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Link href="/the-loai">Xem tất cả</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuContent className="bg-[#18181B]/95 backdrop-blur-xl border border-white/[0.08]">
-                <DropdownMenuItem>
-                  <Link href="/quoc-gia/nhat-ban">Nhật Bản</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/quoc-gia/han-quoc">Hàn Quốc</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/quoc-gia/trung-quoc">Trung Quốc</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/quoc-gia/viet-nam">Việt Nam</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -325,9 +310,6 @@ export default function Header() {
             <SearchDialog />
 
             <ThemeToggle />
-            <Button variant="ghost" size="icon" title="Lịch sử đọc truyện">
-              <Clock className="h-5 w-5" />
-            </Button>
             <Link href="/truyen-yeu-thich">
               <Button variant="ghost" size="icon" title="Truyện yêu thích" className="hidden sm:inline-flex">
                 <Heart className="h-5 w-5" />

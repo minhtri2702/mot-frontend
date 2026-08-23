@@ -1,4 +1,4 @@
-import { getFromCache, setToCache, generateCacheKey } from "./cache";
+import { getFromCache, setToCache, generateCacheKey, invalidateCacheByFragment } from "./cache";
 
 /**
  * Format large numbers to readable format (e.g., 1.5M, 200K)
@@ -48,6 +48,7 @@ interface FetchOptions extends RequestInit {
   skipCache?: boolean;
   cacheTtl?: number;
   auth?: boolean;
+  cacheKey?: string;
 }
 
 /**
@@ -66,11 +67,10 @@ function getAuthToken(): string | null {
  * Generic fetch wrapper with caching and auth support
  */
 async function cachedFetch<T>(url: string, options: FetchOptions = {}): Promise<T> {
-  const { skipCache = false, cacheTtl, auth = false, ...fetchOptions } = options;
+  const { skipCache = false, cacheTtl, auth = false, cacheKey = generateCacheKey(url), ...fetchOptions } = options;
 
   // Try cache first (unless skipCache is true)
   if (!skipCache) {
-    const cacheKey = generateCacheKey(url);
     const cached = getFromCache<T>(cacheKey);
     if (cached) {
       return cached;
@@ -104,7 +104,6 @@ async function cachedFetch<T>(url: string, options: FetchOptions = {}): Promise<
 
   // Cache the result
   if (!skipCache) {
-    const cacheKey = generateCacheKey(url);
     setToCache(cacheKey, data, cacheTtl);
   }
 
@@ -122,6 +121,7 @@ export interface MangaSummaryDTO {
   coverImagePath: string;
   status: string;
   author: string;
+  description: string;
   views: number;
   likes: number;
   followers: number;
@@ -367,6 +367,7 @@ export async function addFavorite(userId: string, mangaId: string): Promise<void
   if (!response.ok) {
     throw new Error(`Failed to add favorite: ${response.status}`);
   }
+  invalidateCacheByFragment(`/user/${userId}/favorites`);
 }
 
 /**
@@ -384,6 +385,7 @@ export async function removeFavorite(userId: string, mangaId: string): Promise<v
   if (!response.ok) {
     throw new Error(`Failed to remove favorite: ${response.status}`);
   }
+  invalidateCacheByFragment(`/user/${userId}/favorites`);
 }
 
 /**
@@ -466,9 +468,11 @@ export async function getComments(
 ): Promise<PagedResponseDTO<CommentDTO>> {
   const params = new URLSearchParams({ page: page.toString(), size: size.toString() });
   const url = `${API_BASE_URL}/manga/${mangaId}/comments?${params}`;
-  const headers: Record<string, string> = {};
-  if (userId) headers["X-User-Id"] = userId;
-  return cachedFetch<PagedResponseDTO<CommentDTO>>(url, { headers, cacheTtl: 30 * 1000 });
+  return cachedFetch<PagedResponseDTO<CommentDTO>>(url, {
+    auth: !!userId,
+    cacheKey: `${url}::viewer=${userId || "anonymous"}`,
+    cacheTtl: 30 * 1000,
+  });
 }
 
 /**
@@ -483,12 +487,7 @@ export async function addComment(
 ): Promise<CommentDTO> {
   const url = `${API_BASE_URL}/manga/${mangaId}/comments`;
   const token = getAuthToken();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "X-User-Id": userId,
-    "X-User-Name": username,
-    ...(avatarUrl ? { "X-User-Avatar": avatarUrl } : {}),
-  };
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
   const response = await fetch(url, {
     method: "POST",
@@ -497,6 +496,8 @@ export async function addComment(
   });
   if (!response.ok) throw new Error(`Failed to add comment: ${response.status}`);
   const json = await response.json();
+  invalidateCacheByFragment(`/manga/${mangaId}/comments`);
+  invalidateCacheByFragment(`/user/${userId}/comments`);
   return json.data;
 }
 
@@ -510,10 +511,7 @@ export async function updateComment(
 ): Promise<CommentDTO> {
   const url = `${API_BASE_URL}/comments/${commentId}`;
   const token = getAuthToken();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "X-User-Id": userId,
-  };
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
   const response = await fetch(url, {
     method: "PUT",
@@ -522,6 +520,7 @@ export async function updateComment(
   });
   if (!response.ok) throw new Error(`Failed to update comment: ${response.status}`);
   const json = await response.json();
+  invalidateCacheByFragment("/comments");
   return json.data;
 }
 
@@ -531,13 +530,14 @@ export async function updateComment(
 export async function deleteComment(commentId: string, userId: string): Promise<void> {
   const url = `${API_BASE_URL}/comments/${commentId}`;
   const token = getAuthToken();
-  const headers: Record<string, string> = { "X-User-Id": userId };
+  const headers: Record<string, string> = {};
   if (token) headers["Authorization"] = `Bearer ${token}`;
   const response = await fetch(url, {
     method: "DELETE",
     headers,
   });
   if (!response.ok) throw new Error(`Failed to delete comment: ${response.status}`);
+  invalidateCacheByFragment("/comments");
 }
 
 /**
@@ -546,11 +546,24 @@ export async function deleteComment(commentId: string, userId: string): Promise<
 export async function toggleLikeComment(commentId: string, userId: string): Promise<void> {
   const url = `${API_BASE_URL}/comments/${commentId}/like`;
   const token = getAuthToken();
-  const headers: Record<string, string> = { "X-User-Id": userId };
+  const headers: Record<string, string> = {};
   if (token) headers["Authorization"] = `Bearer ${token}`;
   const response = await fetch(url, {
     method: "POST",
     headers,
   });
   if (!response.ok) throw new Error(`Failed to toggle like: ${response.status}`);
+  invalidateCacheByFragment("/comments");
+}
+
+// ============================================
+// User Comments API
+// ============================================
+
+/**
+ * Get comments by user ID
+ */
+export async function getUserComments(userId: string, page: number = 0, size: number = 20): Promise<PagedResponseDTO<CommentDTO>> {
+  const url = `${API_BASE_URL}/user/${userId}/comments?page=${page}&size=${size}`;
+  return cachedFetch<PagedResponseDTO<CommentDTO>>(url, { auth: true, cacheTtl: 30 * 1000 });
 }

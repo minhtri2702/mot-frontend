@@ -43,28 +43,33 @@ function useHideOnScroll(threshold = 10) {
 }
 
 // ============================================
-// Chapter Image Component - loads all images immediately
+// Chapter Image Component - eagerly loads the opening pages, then defers the rest.
 // ============================================
 const ChapterImage = memo(function ChapterImage({
   src,
   alt,
+  priority,
 }: {
   src: string;
   alt: string;
+  priority: boolean;
 }) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (
-    <div className="w-full">
-      {!isLoaded && <div className="w-full aspect-[3/4] bg-muted animate-pulse" />}
-      <div className={`${isLoaded ? "block" : "hidden"}`}>
-        <img
-          src={src}
-          alt={alt}
-          className="w-full h-auto"
-          onLoad={() => setIsLoaded(true)}
-        />
-      </div>
+    <div className={`relative w-full ${isLoaded ? "" : "aspect-[3/4]"}`}>
+      {!isLoaded && (
+        <div className="absolute inset-0 animate-pulse bg-muted" aria-hidden="true" />
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`w-full h-auto transition-opacity duration-200 ${isLoaded ? "opacity-100" : "absolute inset-0 opacity-0"}`}
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
+        decoding="async"
+        onLoad={() => setIsLoaded(true)}
+      />
     </div>
   );
 });
@@ -193,6 +198,17 @@ export default function ChapterReaderPage() {
     fetchData();
   }, [id, chapterId]);
 
+  // In page mode, warm only the next page so navigation feels instant without
+  // downloading the whole chapter up front.
+  useEffect(() => {
+    if (readingMode !== "page" || !chapter) return;
+    const nextImageUrl = chapter.imageUrls[currentPage + 1];
+    if (!nextImageUrl) return;
+
+    const nextImage = new window.Image();
+    nextImage.src = nextImageUrl;
+  }, [chapter, currentPage, readingMode]);
+
   // Auto-hide header on scroll down (must be before early returns)
   const { isHidden: headerHidden } = useHideOnScroll();
 
@@ -309,6 +325,7 @@ export default function ChapterReaderPage() {
                   key={index}
                   src={imageUrl}
                   alt={`${chapterTitle} - Trang ${index + 1}`}
+                  priority={index < 2}
                 />
               ))
             ) : (
@@ -325,6 +342,8 @@ export default function ChapterReaderPage() {
                       src={chapter.imageUrls[currentPage]}
                       alt={`${chapterTitle} - Trang ${currentPage + 1}`}
                       className="w-full h-auto rounded-lg shadow-lg"
+                      loading="eager"
+                      decoding="async"
                     />
                   </div>
                   <div className="flex items-center gap-4 mt-6">

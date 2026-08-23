@@ -75,6 +75,25 @@ export function invalidateCache(key: string): void {
   }
 }
 
+/** Remove cached API responses whose key contains the supplied URL fragment. */
+export function invalidateCacheByFragment(fragment: string): void {
+  for (const key of memoryCache.keys()) {
+    if (key.includes(fragment)) memoryCache.delete(key);
+  }
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const storageKey = localStorage.key(i);
+      if (storageKey?.startsWith("cache:") && storageKey.includes(fragment)) {
+        keysToRemove.push(storageKey);
+      }
+    }
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
+  } catch {
+    // Ignore unavailable localStorage.
+  }
+}
+
 /**
  * Clear all cached data
  */

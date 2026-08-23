@@ -23,7 +23,7 @@ const MangaCard = memo(function MangaCard({ manga, showBadge = "none" }: MangaCa
           width="300"
           height="450"
           className="absolute inset-0 w-full h-full object-cover transition-all duration-250 group-hover:scale-[1.06]"
-          loading="eager"
+          loading="lazy"
           onError={(e) => { e.currentTarget.src = "/placeholder-cover.svg"; }}
         />
 

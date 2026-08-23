@@ -315,7 +315,7 @@ export default function Home() {
                 Xem tất cả <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {latestUpdates.slice(0, 24).map((manga) => (
                 <MangaCard key={manga.id} manga={manga} showBadge="time" />
               ))}
@@ -333,7 +333,7 @@ export default function Home() {
                 Xem tất cả <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {trendingManga.slice(0, 24).map((manga) => (
                 <MangaCard key={manga.id} manga={manga} showBadge="views" />
               ))}
@@ -352,7 +352,7 @@ export default function Home() {
                   Xem tất cả <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                 {trendingManga.filter(m => m.status === "Hoàn thành").slice(0, 24).map((manga) => (
                   <MangaCard key={manga.id} manga={manga} showBadge="rating" />
                 ))}
