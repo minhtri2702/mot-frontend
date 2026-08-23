@@ -595,3 +595,39 @@ export async function getUserComments(userId: string, page: number = 0, size: nu
   const url = `${API_BASE_URL}/user/${userId}/comments?page=${page}&size=${size}`;
   return cachedFetch<PagedResponseDTO<CommentDTO>>(url, { auth: true, cacheTtl: 30 * 1000 });
 }
+
+// ============================================
+// Admin data health APIs (manual, read-only; never polled in background)
+// ============================================
+
+export interface DataHealthSummaryDTO {
+  chaptersWithoutImages: number;
+  imagesWithoutPath: number;
+  duplicatePageOrders: number;
+  mangaWithoutCover: number;
+  checkedAt: string;
+}
+
+export interface DataHealthIssueDTO {
+  chapterId: number;
+  mangaId: string;
+  mangaTitle: string;
+  chapterNumber: number;
+  chapterName: string | null;
+  imageCount: number;
+  issueType: "MISSING_IMAGES";
+}
+
+export async function getDataHealthSummary(): Promise<DataHealthSummaryDTO> {
+  return cachedFetch<DataHealthSummaryDTO>(`${API_BASE_URL}/admin/data-health/summary`, {
+    auth: true,
+    skipCache: true,
+  });
+}
+
+export async function getChaptersWithoutImages(page = 0, size = 25): Promise<PagedResponseDTO<DataHealthIssueDTO>> {
+  return cachedFetch<PagedResponseDTO<DataHealthIssueDTO>>(
+    `${API_BASE_URL}/admin/data-health/chapters-without-images?page=${page}&size=${size}`,
+    { auth: true, skipCache: true },
+  );
+}

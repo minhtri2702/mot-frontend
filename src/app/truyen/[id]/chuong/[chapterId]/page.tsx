@@ -19,6 +19,22 @@ interface SavedReadingPosition {
   updatedAt: string;
 }
 
+function withRetryToken(src: string, retryCount: number) {
+  if (retryCount === 0) return src;
+  return `${src}${src.includes("?") ? "&" : "?"}retry=${retryCount}`;
+}
+
+function reportImageError(payload: Record<string, unknown>) {
+  try {
+    const body = JSON.stringify({ ...payload, occurredAt: new Date().toISOString() });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon("/api/image-errors", new Blob([body], { type: "application/json" }));
+    } else {
+      void fetch("/api/image-errors", { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true });
+    }
+  } catch {}
+}
+
 // ============================================
 // Custom hook: hide header on scroll down, show on scroll up
 // Listens on window scroll
@@ -71,6 +87,7 @@ const ChapterImage = memo(function ChapterImage({
   const [isLoaded, setIsLoaded] = useState(false);
   const [shouldLoad, setShouldLoad] = useState(priority);
   const [failed, setFailed] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -93,7 +110,7 @@ const ChapterImage = memo(function ChapterImage({
       )}
       {shouldLoad && !failed && (
         <img
-          src={src}
+          src={withRetryToken(src, retryCount)}
           alt={alt}
           className={`h-auto w-full transition-opacity duration-200 ${isLoaded ? "opacity-100" : "absolute inset-0 opacity-0"}`}
           loading={priority ? "eager" : "lazy"}
@@ -103,14 +120,17 @@ const ChapterImage = memo(function ChapterImage({
             setIsLoaded(true);
             onLoaded(index);
           }}
-          onError={() => setFailed(true)}
+          onError={() => {
+            setFailed(true);
+            reportImageError({ src, pageIndex: index, retryCount, mode: "scroll", page: window.location.pathname });
+          }}
         />
       )}
       {failed && (
         <button
           type="button"
           className="absolute inset-0 grid w-full place-items-center bg-muted px-4 text-sm text-muted-foreground"
-          onClick={() => { setFailed(false); setShouldLoad(true); }}
+          onClick={() => { setRetryCount((value) => value + 1); setFailed(false); setShouldLoad(true); }}
         >
           Ảnh tải lỗi, nhấn để thử lại
         </button>
@@ -137,6 +157,9 @@ export default function ChapterReaderPage() {
   const [readerWidth, setReaderWidth] = useState<ReaderWidth>("comfortable");
   const [loadedPages, setLoadedPages] = useState(() => new Set<number>());
   const [autoNextCountdown, setAutoNextCountdown] = useState<number | null>(null);
+  const [autoNextCancelled, setAutoNextCancelled] = useState(false);
+  const [pageImageFailed, setPageImageFailed] = useState(false);
+  const [pageImageRetry, setPageImageRetry] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const progressRAFRef = useRef<number>();
@@ -144,6 +167,7 @@ export default function ChapterReaderPage() {
   const exactResumeDoneRef = useRef(false);
   const preloadedImagesRef = useRef(new Set<string>());
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const readerEndRef = useRef<HTMLDivElement>(null);
 
   const positionKey = `reading-position-${id}-${chapterId}`;
   const bookmarkKey = `reading-bookmark-${id}-${chapterId}`;
@@ -337,6 +361,11 @@ export default function ChapterReaderPage() {
   }, [chapter]);
 
   useEffect(() => {
+    setPageImageFailed(false);
+    setPageImageRetry(0);
+  }, [currentPage]);
+
+  useEffect(() => {
     if (readingMode !== "page" || !chapter) return;
     setVisiblePage(currentPage);
     setProgress(chapter.imageUrls.length > 1 ? Math.round((currentPage / (chapter.imageUrls.length - 1)) * 100) : 100);
@@ -353,7 +382,29 @@ export default function ChapterReaderPage() {
   useEffect(() => {
     setLoadedPages(new Set());
     setAutoNextCountdown(null);
+    setAutoNextCancelled(false);
+    setPageImageFailed(false);
+    setPageImageRetry(0);
   }, [chapterId]);
+
+  useEffect(() => {
+    if (!chapter?.navigation.nextChapterId || autoNextCancelled) return;
+
+    if (readingMode === "page") {
+      if (currentPage === chapter.imageUrls.length - 1) {
+        setAutoNextCountdown((value) => value ?? 8);
+      }
+      return;
+    }
+
+    const target = readerEndRef.current;
+    if (!target) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) setAutoNextCountdown((value) => value ?? 8);
+    }, { rootMargin: "0px 0px 160px" });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [autoNextCancelled, chapter, currentPage, readingMode]);
 
   useEffect(() => {
     if (autoNextCountdown == null || !chapter?.navigation.nextChapterId) return;
@@ -455,7 +506,7 @@ export default function ChapterReaderPage() {
 
   const bgClass = readingBg === "black" ? "bg-[#11110f]" : readingBg === "white" ? "bg-[#f5f2eb]" : "bg-[#272624]";
   const chapterTitle = chapter.chapterName || `Chương ${chapter.chapterNumber}`;
-  const readerWidthClass = readerWidth === "compact" ? "max-w-2xl" : readerWidth === "comfortable" ? "max-w-4xl" : "max-w-none";
+  const readerWidthClass = readerWidth === "compact" ? "max-w-2xl" : readerWidth === "comfortable" ? "max-w-4xl" : "max-w-[1200px]";
 
   const handleTouchStart = (event: React.TouchEvent) => {
     const touch = event.touches[0];
@@ -620,13 +671,27 @@ export default function ChapterReaderPage() {
               {chapter.imageUrls.length > 0 ? (
                 <>
                   <div className="relative w-full max-w-3xl">
-                    <img
-                      src={chapter.imageUrls[currentPage]}
+                    {!pageImageFailed ? <img
+                      key={`${currentPage}-${pageImageRetry}`}
+                      src={withRetryToken(chapter.imageUrls[currentPage], pageImageRetry)}
                       alt={`${chapterTitle} - Trang ${currentPage + 1}`}
                       className="w-full h-auto rounded-lg shadow-lg"
                       loading="eager"
                       decoding="async"
-                    />
+                      onLoad={() => setPageImageFailed(false)}
+                      onError={() => {
+                        setPageImageFailed(true);
+                        reportImageError({ src: chapter.imageUrls[currentPage], pageIndex: currentPage, retryCount: pageImageRetry, mode: "page", page: window.location.pathname });
+                      }}
+                    /> : (
+                      <button
+                        type="button"
+                        className="grid min-h-[55vh] w-full place-items-center rounded-xl bg-muted px-5 text-sm font-medium text-muted-foreground"
+                        onClick={() => { setPageImageRetry((value) => value + 1); setPageImageFailed(false); }}
+                      >
+                        Ảnh tải lỗi, nhấn để thử lại
+                      </button>
+                    )}
                   </div>
                   <div className="flex items-center gap-4 mt-6">
                     <Button
@@ -660,9 +725,20 @@ export default function ChapterReaderPage() {
         </div>
       </div>
 
+      <div ref={readerEndRef} className="h-px" aria-hidden="true" />
+
       {chapter.imageUrls.length > 0 && (
         <div className="fixed bottom-4 left-4 z-40 hidden rounded-full border border-border bg-background/90 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-lg backdrop-blur sm:block">
           Đã tải {loadedPages.size}/{chapter.imageUrls.length} trang
+        </div>
+      )}
+
+      {readingMode === "page" && autoNextCountdown != null && (
+        <div className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-border bg-background/95 px-4 py-2.5 text-sm text-muted-foreground shadow-xl">
+          <span>Chuyển chương sau trong {autoNextCountdown}s</span>
+          <Button variant="ghost" size="sm" onClick={() => { setAutoNextCountdown(null); setAutoNextCancelled(true); }}>
+            <RotateCcw className="mr-1 h-3.5 w-3.5" /> Hủy
+          </Button>
         </div>
       )}
 
@@ -735,13 +811,13 @@ export default function ChapterReaderPage() {
           {chapter.navigation.nextChapterId && (
             <div className="container flex justify-center pb-5">
               {autoNextCountdown == null ? (
-                <Button variant="ghost" size="sm" onClick={() => setAutoNextCountdown(5)}>
-                  Tự chuyển chương sau trong 5 giây
+                <Button variant="ghost" size="sm" onClick={() => { setAutoNextCancelled(false); setAutoNextCountdown(8); }}>
+                  {autoNextCancelled ? "Bật lại tự chuyển chương" : "Tự chuyển khi đọc đến cuối"}
                 </Button>
               ) : (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   Chuyển chương sau trong {autoNextCountdown}s
-                  <Button variant="ghost" size="sm" onClick={() => setAutoNextCountdown(null)}>
+                  <Button variant="ghost" size="sm" onClick={() => { setAutoNextCountdown(null); setAutoNextCancelled(true); }}>
                     <RotateCcw className="mr-1 h-3.5 w-3.5" /> Hủy
                   </Button>
                 </div>

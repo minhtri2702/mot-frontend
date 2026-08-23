@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, Search, User, ChevronDown, BookOpen, Clock, Heart, BarChart, Sun, Moon, LogOut, Settings } from "lucide-react";
+import { Menu, Search, User, ChevronDown, BookOpen, Clock, Heart, BarChart, Sun, Moon, LogOut, Settings, ShieldCheck } from "lucide-react";
 import SearchDialog from "@/components/search-dialog";
 import { useAuth } from "@/lib/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -133,6 +133,14 @@ function UserMenu() {
             Truyện yêu thích
           </Link>
         </DropdownMenuItem>
+        {user.roles.includes("ROLE_ADMIN") && (
+          <DropdownMenuItem asChild>
+            <Link href="/admin/data-health">
+              <ShieldCheck className="h-4 w-4 mr-2" />
+              Kiểm tra dữ liệu
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <Link href="/loi-ngo">
             <BookOpen className="h-4 w-4 mr-2" />
