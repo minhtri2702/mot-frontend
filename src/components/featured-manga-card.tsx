@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, Play, Heart, ChevronLeft, ChevronRight, Info } from "lucide-react";
@@ -15,6 +18,12 @@ interface FeaturedMangaCardProps {
   totalSlides?: number;
 }
 
+function getBannerImageUrl(coverUrl: string) {
+  const separatorIndex = coverUrl.lastIndexOf("/");
+  if (separatorIndex < 0) return coverUrl;
+  return `${coverUrl.slice(0, separatorIndex)}/banner.jpg`;
+}
+
 export default function FeaturedMangaCard({
   manga,
   isFirst,
@@ -23,21 +32,57 @@ export default function FeaturedMangaCard({
   currentIndex = 0,
   totalSlides = 1
 }: FeaturedMangaCardProps) {
+  const coverUrl = getCoverImageUrl(manga.cover);
+  const bannerUrl = getBannerImageUrl(coverUrl);
+  const [bannerFailed, setBannerFailed] = useState(false);
+
+  useEffect(() => {
+    setBannerFailed(false);
+  }, [manga.id]);
+
   return (
     <div className="group relative h-[390px] w-full overflow-hidden rounded-[18px] bg-muted ring-1 ring-border md:h-[440px] lg:h-[480px]">
-      {/* Background Image */}
+      {/* The low-detail cover becomes an atmospheric backdrop, never the focal artwork. */}
       <Image
-        src={getCoverImageUrl(manga.cover)}
-        alt={manga.title}
+        src={coverUrl}
+        alt=""
         fill
         priority={isFirst}
         sizes="(max-width: 1024px) 100vw, 75vw"
-        className="absolute inset-0 h-full w-full object-cover"
+        className={`absolute inset-0 h-full w-full scale-110 object-cover transition-opacity duration-200 ${bannerFailed ? "opacity-55 blur-xl" : "opacity-30 blur-lg"}`}
       />
 
-      {/* Cinematic Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#151515]/92 via-[#151515]/52 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#151515]/65 via-transparent to-[#151515]/5" />
+      {/* Optional hand-curated artwork: {manga-folder}/banner.jpg */}
+      {!bannerFailed && (
+        <Image
+          key={bannerUrl}
+          src={bannerUrl}
+          alt={manga.title}
+          fill
+          priority={isFirst}
+          sizes="(max-width: 1024px) 100vw, 75vw"
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={() => setBannerFailed(true)}
+        />
+      )}
+
+      {/* Preserve the original portrait cover when no dedicated banner exists. */}
+      {bannerFailed && (
+        <div className="absolute right-[7%] top-1/2 hidden h-[86%] aspect-[2/3] -translate-y-1/2 overflow-hidden rounded-xl shadow-[0_24px_60px_rgba(0,0,0,0.42)] ring-1 ring-white/15 lg:block">
+          <Image
+            src={coverUrl}
+            alt={`Bìa ${manga.title}`}
+            fill
+            priority={isFirst}
+            sizes="320px"
+            className="object-cover"
+          />
+        </div>
+      )}
+
+      {/* Contrast layers protect copy with either user-supplied banners or fallback covers. */}
+      <div className={`absolute inset-0 ${bannerFailed ? "bg-gradient-to-r from-[#151515]/95 via-[#151515]/82 to-[#151515]/30" : "bg-gradient-to-r from-[#151515]/94 via-[#151515]/58 to-[#151515]/12"}`} />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#151515]/72 via-transparent to-[#151515]/10" />
 
       {/* Navigation Arrows */}
       {onPrev && onNext && totalSlides > 1 && (
@@ -76,7 +121,7 @@ export default function FeaturedMangaCard({
 
       {/* Content */}
       <div className="absolute inset-0 flex items-end lg:items-center">
-        <div className="w-full p-6 md:p-10 lg:w-[55%] lg:p-12">
+        <div className={`w-full p-6 md:p-10 lg:p-12 ${bannerFailed ? "lg:w-[58%]" : "lg:w-[55%]"}`}>
           {/* Rating & Meta */}
           <div className="flex items-center gap-3 mb-3">
             <div className="flex items-center gap-1">
