@@ -63,6 +63,19 @@ function getAuthToken(): string | null {
   }
 }
 
+function clearRejectedAuth(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem("auth_token");
+  localStorage.removeItem("auth_user");
+  window.dispatchEvent(new Event("mot:auth-rejected"));
+}
+
+function handleAuthFailure(response: Response, authRequired: boolean): void {
+  if (authRequired && (response.status === 401 || response.status === 403)) {
+    clearRejectedAuth();
+  }
+}
+
 /**
  * Generic fetch wrapper with caching and auth support
  */
@@ -94,6 +107,7 @@ async function cachedFetch<T>(url: string, options: FetchOptions = {}): Promise<
   });
 
   if (!response.ok) {
+    handleAuthFailure(response, auth);
     throw new Error(`API Error: ${response.status} ${response.statusText}`);
   }
 
@@ -365,6 +379,7 @@ export async function addFavorite(userId: string, mangaId: string): Promise<void
     headers,
   });
   if (!response.ok) {
+    handleAuthFailure(response, true);
     throw new Error(`Failed to add favorite: ${response.status}`);
   }
   invalidateCacheByFragment(`/user/${userId}/favorites`);
@@ -383,6 +398,7 @@ export async function removeFavorite(userId: string, mangaId: string): Promise<v
     headers,
   });
   if (!response.ok) {
+    handleAuthFailure(response, true);
     throw new Error(`Failed to remove favorite: ${response.status}`);
   }
   invalidateCacheByFragment(`/user/${userId}/favorites`);
@@ -494,7 +510,10 @@ export async function addComment(
     headers,
     body: JSON.stringify(request),
   });
-  if (!response.ok) throw new Error(`Failed to add comment: ${response.status}`);
+  if (!response.ok) {
+    handleAuthFailure(response, true);
+    throw new Error(`Failed to add comment: ${response.status}`);
+  }
   const json = await response.json();
   invalidateCacheByFragment(`/manga/${mangaId}/comments`);
   invalidateCacheByFragment(`/user/${userId}/comments`);
@@ -518,7 +537,10 @@ export async function updateComment(
     headers,
     body: JSON.stringify({ content }),
   });
-  if (!response.ok) throw new Error(`Failed to update comment: ${response.status}`);
+  if (!response.ok) {
+    handleAuthFailure(response, true);
+    throw new Error(`Failed to update comment: ${response.status}`);
+  }
   const json = await response.json();
   invalidateCacheByFragment("/comments");
   return json.data;
@@ -536,7 +558,10 @@ export async function deleteComment(commentId: string, userId: string): Promise<
     method: "DELETE",
     headers,
   });
-  if (!response.ok) throw new Error(`Failed to delete comment: ${response.status}`);
+  if (!response.ok) {
+    handleAuthFailure(response, true);
+    throw new Error(`Failed to delete comment: ${response.status}`);
+  }
   invalidateCacheByFragment("/comments");
 }
 
@@ -552,7 +577,10 @@ export async function toggleLikeComment(commentId: string, userId: string): Prom
     method: "POST",
     headers,
   });
-  if (!response.ok) throw new Error(`Failed to toggle like: ${response.status}`);
+  if (!response.ok) {
+    handleAuthFailure(response, true);
+    throw new Error(`Failed to toggle like: ${response.status}`);
+  }
   invalidateCacheByFragment("/comments");
 }
 

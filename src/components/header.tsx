@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -100,7 +101,7 @@ function UserMenu() {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 bg-popover/95 backdrop-blur-xl">
+      <DropdownMenuContent align="end" className="w-56">
         <div className="flex items-center gap-2 px-2 py-1.5">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user.avatarUrl || undefined} alt={user.username} />
@@ -159,7 +160,7 @@ function MobileNav() {
           <span className="sr-only">Menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[280px] bg-background/95 backdrop-blur-xl sm:w-[320px]">
+      <SheetContent side="left" className="w-[280px] sm:w-[320px]">
         <SheetHeader className="border-b pb-4 mb-4">
           <SheetTitle className="flex items-center">
             <BookOpen className="h-5 w-5 text-primary mr-2" />
@@ -228,29 +229,40 @@ function MobileNav() {
 }
 
 export default function Header() {
+  const pathname = usePathname();
+  const navClass = (href: string) =>
+    `rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+      pathname === href
+        ? "bg-accent text-accent-foreground"
+        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+    }`;
+
   return (
     <header className="sticky top-0 z-50 w-full glass-header">
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container flex h-[68px] items-center justify-between gap-3">
         {/* Mobile Menu Button */}
         <MobileNav />
 
         {/* Logo */}
         <div className="flex items-center">
-          <Link href="/" className="flex items-center mr-6">
-            <BookOpen className="h-6 w-6 text-primary mr-2" />
-            <span className="hidden text-xl font-bold sm:inline-block">Mọt Truyện</span>
-            <span className="text-lg font-bold sm:hidden">Mọt</span>
+          <Link href="/" className="mr-5 flex items-center gap-2.5" aria-label="Mọt Truyện, trang chủ">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-[inset_0_-2px_0_hsl(var(--foreground)/0.12)]">
+              <BookOpen className="h-5 w-5" strokeWidth={2.2} />
+            </span>
+            <span className="hidden font-[family-name:var(--font-space-grotesk)] text-xl font-semibold tracking-tight sm:inline-block">
+              Mọt<span className="text-primary">.</span>
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-4">
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Điều hướng chính">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center">
+                <Button variant="ghost" className="h-9 rounded-lg px-3 font-semibold text-muted-foreground hover:text-foreground">
                   Thể loại <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-popover/95 backdrop-blur-xl">
+              <DropdownMenuContent>
                 <DropdownMenuItem>
                   <Link href="/the-loai/action">Action</Link>
                 </DropdownMenuItem>
@@ -269,13 +281,13 @@ export default function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Link href="/truyen-moi-cap-nhat" className="text-sm font-medium hover:text-primary">
+            <Link href="/truyen-moi-cap-nhat" className={navClass("/truyen-moi-cap-nhat")}>
               Mới cập nhật
             </Link>
-            <Link href="/truyen-hot" className="text-sm font-medium hover:text-primary">
+            <Link href="/truyen-hot" className={navClass("/truyen-hot")}>
               Truyện Hot
             </Link>
-            <Link href="/truyen-full" className="text-sm font-medium hover:text-primary">
+            <Link href="/truyen-full" className={navClass("/truyen-full")}>
               Hoàn thành
             </Link>
           </nav>
@@ -284,7 +296,7 @@ export default function Header() {
         {/* Search and User */}
         <div className="flex items-center space-x-1">
           {/* Desktop Search */}
-          <div className="hidden md:block relative w-full max-w-[280px] lg:max-w-[400px]">
+          <div className="relative hidden w-[220px] md:block lg:w-[320px]">
             <button
               onClick={() => {
                 // Trigger search dialog via keyboard event simulation
@@ -295,11 +307,11 @@ export default function Header() {
                 });
                 window.dispatchEvent(event);
               }}
-              className="flex items-center w-full px-3 py-1.5 rounded-full bg-muted text-sm text-muted-foreground hover:bg-muted/80 transition-colors"
+              className="flex h-10 w-full items-center rounded-xl border border-border bg-muted/70 px-3 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               <Search className="h-4 w-4 mr-2 shrink-0" />
-              <span className="flex-1 text-left">Tìm truyện...</span>
-              <kbd className="hidden lg:inline-flex items-center gap-1 rounded border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              <span className="flex-1 text-left">Tìm truyện, tác giả…</span>
+              <kbd className="hidden items-center gap-1 rounded-md border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground lg:inline-flex">
                 <span className="text-[10px]">⌘</span>K
               </kbd>
             </button>

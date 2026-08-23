@@ -98,7 +98,7 @@ function toCardData(m: MangaSummaryDTO): MangaCardData {
 
 function ReadingHistoryItem({ item, onRemove }: { item: ReadingHistoryEntry; onRemove: (mangaId: string) => void }) {
   return (
-    <div className="group flex items-center gap-3 rounded-xl border bg-card/60 p-3 transition-colors hover:bg-card">
+    <div className="group flex items-center gap-3 rounded-xl bg-muted/55 p-3 ring-1 ring-border/70 transition-colors hover:bg-muted">
       <Link
         href={`/truyen/${item.mangaId}/chuong/${item.chapterId}`}
         className="flex min-w-0 flex-1 gap-3"
@@ -260,23 +260,12 @@ export default function Home() {
     setHeroIndex((prev) => (prev === heroSlides.length - 1 ? 0 : prev + 1));
   }, [heroSlides.length]);
 
-  // Auto-slide every 5 seconds
-  useEffect(() => {
-    if (heroSlides.length <= 1) return;
-    const interval = setInterval(nextHero, 5000);
-    return () => clearInterval(interval);
-  }, [nextHero, heroSlides.length]);
-
   if (isLoading) {
     return (
-      <div className="container py-8 space-y-10">
+      <div className="container space-y-12 py-8">
         <section>
-          <h2 className="text-2xl font-bold mb-4">Truyện Đề Xuất</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="aspect-[4/3] md:aspect-[3/2] bg-muted rounded-lg animate-pulse" />
-            ))}
-          </div>
+          <div className="mb-4 h-7 w-40 animate-pulse rounded-md bg-muted" />
+          <div className="h-[360px] animate-pulse rounded-[18px] bg-muted ring-1 ring-border md:h-[390px] lg:h-[420px]" />
         </section>
         <MangaGridSkeleton count={12} />
       </div>
@@ -284,10 +273,10 @@ export default function Home() {
   }
 
   return (
-    <div className="container py-4 space-y-6">
+    <div className="container space-y-10 py-5 md:py-8">
       {/* ===== HERO BANNER - Full width ===== */}
       {currentHero && (
-        <section className="max-w-[100%] max-h-[75%] mx-auto">
+        <section aria-label="Truyện nổi bật">
           <FeaturedMangaCard
             manga={currentHero}
             isFirst={heroIndex === 0}
@@ -302,9 +291,9 @@ export default function Home() {
       {/* ===== CONTINUE READING ===== */}
       {localHistory.length > 0 && (
         <section aria-labelledby="continue-reading-title">
-          <div className="mb-4 flex items-end justify-between gap-4">
+          <div className="mb-5 flex items-end justify-between gap-4 border-b border-border pb-4">
             <div>
-              <h2 id="continue-reading-title" className="flex items-center gap-2 text-xl font-bold md:text-2xl">
+              <h2 id="continue-reading-title" className="flex items-center gap-2 text-xl font-semibold md:text-2xl">
                 <History className="h-5 w-5 text-primary" />
                 Đọc tiếp
               </h2>
@@ -324,24 +313,24 @@ export default function Home() {
       )}
 
       {/* ===== TWO-COLUMN LAYOUT: Main + Sidebar ===== */}
-      <div className="flex flex-col lg:flex-row gap-8">
+      <div className="flex flex-col gap-10 lg:flex-row lg:gap-12">
 
         {/* ===== MAIN CONTENT (LEFT) ===== */}
-        <div className="flex-1 min-w-0 space-y-10">
+        <div className="min-w-0 flex-1 space-y-14">
 
           {/* ===== Mới Cập Nhật ===== */}
           <section>
-            <div className="flex justify-between items-center mb-5">
-              <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <div className="mb-6 flex items-end justify-between gap-4 border-b border-border pb-4">
+              <h2 className="flex items-center gap-2 text-xl font-semibold md:text-2xl">
                 <Clock className="h-5 w-5 text-primary" />
                 Mới Cập Nhật
               </h2>
-              <Link href="/truyen-moi-cap-nhat" className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
+              <Link href="/truyen-moi-cap-nhat" className="flex min-h-11 items-center gap-1 text-sm font-semibold text-primary hover:underline">
                 Xem tất cả <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {latestUpdates.slice(0, 24).map((manga) => (
+              {latestUpdates.slice(0, 12).map((manga) => (
                 <MangaCard key={manga.id} manga={manga} showBadge="time" />
               ))}
             </div>
@@ -349,17 +338,17 @@ export default function Home() {
 
           {/* ===== Xu Hướng ===== */}
           <section>
-            <div className="flex justify-between items-center mb-5">
+            <div className="mb-6 flex items-end justify-between gap-4 border-b border-border pb-4">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                <h2 className="text-xl md:text-2xl font-bold">Xu Hướng</h2>
+                <h2 className="text-xl font-semibold md:text-2xl">Được đọc nhiều</h2>
               </div>
-              <Link href="/truyen-hot" className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
+              <Link href="/truyen-hot" className="flex min-h-11 items-center gap-1 text-sm font-semibold text-primary hover:underline">
                 Xem tất cả <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {trendingManga.slice(0, 24).map((manga) => (
+              {trendingManga.slice(0, 12).map((manga) => (
                 <MangaCard key={manga.id} manga={manga} showBadge="views" />
               ))}
             </div>
@@ -368,12 +357,12 @@ export default function Home() {
           {/* ===== Truyện Hoàn Thành ===== */}
           {trendingManga.filter(m => m.status === "Hoàn thành").length > 0 && (
             <section>
-              <div className="flex justify-between items-center mb-5">
-                <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+              <div className="mb-6 flex items-end justify-between gap-4 border-b border-border pb-4">
+                <h2 className="flex items-center gap-2 text-xl font-semibold md:text-2xl">
                   <Flame className="h-5 w-5 text-orange-500" />
                   Truyện Hoàn Thành
                 </h2>
-                <Link href="/truyen-full" className="text-sm font-medium text-primary hover:underline flex items-center gap-1">
+                <Link href="/truyen-full" className="flex min-h-11 items-center gap-1 text-sm font-semibold text-primary hover:underline">
                   Xem tất cả <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -390,8 +379,8 @@ export default function Home() {
         <aside className="w-full lg:w-72 shrink-0 space-y-4 lg:sticky lg:top-24 lg:self-start">
           {/* Top Views Ranking */}
           {topViews.length > 0 && (
-            <div className="rounded-lg border bg-card/80 backdrop-blur-sm p-3">
-              <h3 className="font-semibold text-sm mb-2 flex items-center gap-1.5">
+            <div className="border-b border-border pb-5">
+              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold">
                 <Eye className="h-3.5 w-3.5 text-primary" />
                 Top Lượt Xem
               </h3>
@@ -400,7 +389,7 @@ export default function Home() {
                   <Link
                     key={manga.id}
                     href={`/truyen/${manga.id}`}
-                    className="flex items-center gap-2 p-1.5 rounded-md hover:bg-muted/50 transition-colors group"
+                    className="group flex min-h-11 items-center gap-2 rounded-lg px-1.5 py-2 transition-colors hover:bg-muted"
                   >
                     <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
                       index === 0 ? "bg-yellow-500 text-white" :
@@ -425,8 +414,8 @@ export default function Home() {
           )}
 
           {/* Truyện đang theo dõi */}
-          <div className="rounded-lg border bg-card/80 backdrop-blur-sm p-3">
-            <h3 className="font-semibold text-sm mb-2 flex items-center gap-1.5">
+          <div className="border-b border-border pb-5">
+            <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold">
               <Heart className="h-3.5 w-3.5 text-red-500" />
               Truyện đang theo dõi
             </h3>
@@ -441,8 +430,8 @@ export default function Home() {
 
           {/* Thể Loại */}
           {genres.length > 0 && (
-            <div className="rounded-lg border bg-card/80 backdrop-blur-sm p-3">
-              <h3 className="font-semibold text-sm mb-2 flex items-center gap-1.5">
+            <div className="pb-5">
+              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold">
                 <Tag className="h-3.5 w-3.5 text-primary" />
                 Thể Loại
               </h3>

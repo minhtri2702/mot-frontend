@@ -35,6 +35,19 @@ const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_API_URL || "http://localhost:9
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function isJwtExpired(token: string): boolean {
+  try {
+    const payloadPart = token.split(".")[1];
+    if (!payloadPart) return true;
+    const base64 = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
+    const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+    const payload = JSON.parse(atob(base64 + padding)) as { exp?: number };
+    return typeof payload.exp !== "number" || payload.exp <= Date.now() / 1000 + 30;
+  } catch {
+    return true;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -46,9 +59,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const storedToken = localStorage.getItem("auth_token");
       const storedUser = localStorage.getItem("auth_user");
 
-      if (storedToken && storedUser) {
+      if (storedToken && storedUser && !isJwtExpired(storedToken)) {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
+      } else if (storedToken || storedUser) {
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("auth_user");
       }
     } catch (e) {
       // Clear invalid data
@@ -57,6 +73,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    const handleRejectedAuth = () => {
+      setToken(null);
+      setUser(null);
+    };
+    window.addEventListener("mot:auth-rejected", handleRejectedAuth);
+    return () => window.removeEventListener("mot:auth-rejected", handleRejectedAuth);
   }, []);
 
   const login = (newToken: string, newUser: UserInfo) => {

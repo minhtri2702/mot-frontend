@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-23T05:00:00.000Z",
+  "title": "Design System: Mọt Truyện",
+  "extensions": {
+    "colorMeta": {
+      "ember": { "role": "primary", "displayName": "Than Hồng", "canonical": "oklch(0.68 0.17 38)", "tonalRamp": ["#35150e", "#5f2417", "#8c3421", "#bd472c", "#e9613b", "#f58a6c", "#fbb49f", "#fde0d5"] },
+      "night-ink": { "role": "neutral", "displayName": "Mực Đêm", "canonical": "oklch(0.20 0.008 70)", "tonalRamp": ["#151515", "#262522", "#393632", "#504b45", "#6c655d", "#918980", "#beb8b0", "#eeeae4"] },
+      "paper": { "role": "neutral", "displayName": "Giấy Ấm", "canonical": "oklch(0.97 0.01 80)", "tonalRamp": ["#24201b", "#4b4339", "#75695b", "#9d9080", "#c1b6a8", "#ded7cc", "#eee9e1", "#f8f5ef"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "Page and section headings." },
+      "body": { "displayName": "Body", "purpose": "Vietnamese interface and reading copy." },
+      "label": { "displayName": "Label", "purpose": "Actions and compact metadata." }
+    },
+    "shadows": [
+      { "name": "interactive-lift", "value": "0 12px 32px rgba(18, 14, 10, 0.28)", "purpose": "Pointer hover and floating menus only." }
+    ],
+    "motion": [
+      { "name": "ease-state", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Fast state transitions." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main reading and confirmation action.",
+      "html": "<button class=\"ds-btn-primary\">Đọc ngay</button>",
+      "css": ".ds-btn-primary{background:#e9613b;color:#151515;padding:10px 16px;border:0;border-radius:12px;font:600 14px/1.3 system-ui;transition:background-color .18s cubic-bezier(.22,1,.36,1),transform .18s cubic-bezier(.22,1,.36,1)}.ds-btn-primary:hover{background:#f27653;transform:translateY(-1px)}.ds-btn-primary:focus-visible{outline:2px solid #e9613b;outline-offset:3px}.ds-btn-primary:active{transform:translateY(0)}"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "description": "Persistent manga discovery control.",
+      "html": "<input class=\"ds-search\" placeholder=\"Tìm tên truyện, tác giả…\" />",
+      "css": ".ds-search{width:320px;background:#272522;color:#f8f5ef;border:1px solid #3a3732;border-radius:12px;padding:10px 14px;font:400 14px/1.4 system-ui;transition:border-color .18s,box-shadow .18s}.ds-search:focus{outline:0;border-color:#e9613b;box-shadow:0 0 0 3px rgba(233,97,59,.2)}.ds-search::placeholder{color:#aaa49b}"
+    },
+    {
+      "name": "Genre Chip",
+      "kind": "chip",
+      "description": "Compact genre filter, not decorative metadata.",
+      "html": "<button class=\"ds-chip\">Phiêu lưu</button>",
+      "css": ".ds-chip{background:#272522;color:#c9c3ba;border:1px solid #3a3732;border-radius:999px;padding:6px 10px;font:600 12px/1.2 system-ui;transition:background-color .18s,color .18s}.ds-chip:hover{background:#34312d;color:#f8f5ef}.ds-chip:focus-visible{outline:2px solid #e9613b;outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Thư viện đêm",
+    "overview": "Một hiệu sách nhỏ còn sáng đèn vào cuối ngày: yên, ấm và đầy bìa truyện nhiều màu. UI lùi lại để nội dung truyện trở thành nhân vật chính.",
+    "keyCharacteristics": ["Warm neutral surfaces", "Restrained ember accent", "Cover-first hierarchy", "Mobile-first navigation"],
+    "rules": [
+      { "name": "The Ember Rule", "body": "Cam son chiếm không quá 10% một màn hình.", "section": "colors" },
+      { "name": "The Flat Shelf Rule", "body": "Nhóm bằng khoảng cách trước khi thêm container.", "section": "elevation" }
+    ],
+    "dos": ["Do ưu tiên Đọc tiếp.", "Do giữ chuyển động trong 150–220ms."],
+    "donts": ["Don't dùng glassmorphism tràn lan.", "Don't tạo dashboard SaaS."]
+  }
+}

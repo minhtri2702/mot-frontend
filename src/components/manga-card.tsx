@@ -15,14 +15,14 @@ interface MangaCardProps {
  */
 const MangaCard = memo(function MangaCard({ manga, showBadge = "none" }: MangaCardProps) {
   return (
-    <Link href={`/truyen/${manga.id}`} className="group block">
-      <div className="relative mb-3 aspect-[3/4] overflow-hidden rounded-xl bg-white/[0.04] border border-white/[0.06] transition-all duration-250 group-hover:-translate-y-[6px] group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] group-hover:border-white/[0.15] group-hover:bg-white/[0.06]">
+    <Link href={`/truyen/${manga.id}`} className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background">
+      <div className="relative mb-2.5 aspect-[3/4] overflow-hidden rounded-xl bg-muted ring-1 ring-border/70 transition duration-200 ease-out group-hover:-translate-y-1 group-hover:shadow-[0_12px_32px_rgba(18,14,10,0.28)] group-hover:ring-primary/35">
         <img
           src={getCoverImageUrl(manga.cover)}
           alt={manga.title}
           width="300"
           height="450"
-          className="absolute inset-0 w-full h-full object-cover transition-all duration-250 group-hover:scale-[1.06]"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-200 ease-out group-hover:scale-[1.025]"
           loading="lazy"
           onError={(e) => { e.currentTarget.src = "/placeholder-cover.svg"; }}
         />
@@ -30,7 +30,7 @@ const MangaCard = memo(function MangaCard({ manga, showBadge = "none" }: MangaCa
         {/* Badge - only render the active one */}
         {showBadge === "rating" && manga.likes != null && (
           <div className="absolute top-0 right-0 m-2">
-            <Badge variant="secondary" className="bg-primary/80 text-white">
+            <Badge variant="secondary" className="bg-primary text-primary-foreground shadow-sm">
               <Star className="h-3 w-3 mr-1 text-yellow-400" />
               {manga.likes}
             </Badge>
@@ -74,18 +74,18 @@ const MangaCard = memo(function MangaCard({ manga, showBadge = "none" }: MangaCa
         )}
       </div>
 
-      <h3 className="font-medium line-clamp-2 text-sm md:text-base leading-snug group-hover:text-primary transition-colors duration-300">{manga.title}</h3>
+      <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground transition-colors duration-200 group-hover:text-primary md:text-[0.9375rem]">{manga.title}</h3>
 
       {manga.chapter != null && (
-        <p className="text-sm text-muted-foreground mt-0.5">Chapter {manga.chapter}</p>
+        <p className="mt-1 text-xs font-medium text-muted-foreground">Chương {manga.chapter}</p>
       )}
 
       {manga.status && (
-        <p className={`text-xs mt-1 ${
+        <p className={`mt-1 text-[11px] ${
           manga.status === "Đang tiến hành"
-            ? "text-green-600"
+            ? "text-emerald-600 dark:text-emerald-400"
             : manga.status === "Hoàn thành"
-            ? "text-blue-600"
+            ? "text-sky-600 dark:text-sky-400"
             : "text-muted-foreground"
         }`}>
           {manga.status}

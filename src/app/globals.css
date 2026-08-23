@@ -4,48 +4,48 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --background: 40 33% 96%;
+    --foreground: 30 8% 12%;
+    --card: 42 50% 99%;
+    --card-foreground: 30 8% 12%;
+    --popover: 42 50% 99%;
+    --popover-foreground: 30 8% 12%;
+    --primary: 14 79% 57%;
+    --primary-foreground: 24 12% 9%;
+    --secondary: 36 20% 91%;
+    --secondary-foreground: 30 8% 16%;
+    --muted: 36 18% 91%;
+    --muted-foreground: 30 6% 42%;
+    --accent: 18 60% 93%;
+    --accent-foreground: 12 54% 30%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
+    --border: 34 14% 84%;
+    --input: 34 14% 84%;
+    --ring: 14 79% 57%;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 230 17% 9.4%;
-    --foreground: 0 0% 98%;
-    --card: 230 17% 9.4%;
-    --card-foreground: 0 0% 98%;
-    --popover: 230 17% 9.4%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --background: 30 4% 8%;
+    --foreground: 40 24% 95%;
+    --card: 40 5% 11%;
+    --card-foreground: 40 24% 95%;
+    --popover: 36 7% 14%;
+    --popover-foreground: 40 24% 95%;
+    --primary: 14 79% 57%;
+    --primary-foreground: 24 12% 9%;
+    --secondary: 36 7% 16%;
+    --secondary-foreground: 40 18% 91%;
+    --muted: 36 6% 16%;
+    --muted-foreground: 34 8% 65%;
+    --accent: 15 22% 18%;
+    --accent-foreground: 14 82% 72%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --border: 34 7% 22%;
+    --input: 34 7% 24%;
+    --ring: 14 79% 57%;
   }
 }
 
@@ -59,11 +59,13 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    min-height: 100vh;
   }
 
   /* Premium typography for headings */
   h1, h2, h3, h4, h5, h6 {
     @apply tracking-tight;
+    font-family: var(--font-space-grotesk), var(--font-jakarta), system-ui, sans-serif;
   }
 
   /* Subtle letter-spacing for body text */
@@ -77,103 +79,91 @@
   }
 }
 
-/* ============================================
-   DARK GLASSMORPHISM THEME
-   ============================================ */
 html.dark body {
-  background: #14161C;
-  background-attachment: fixed;
+  background: hsl(var(--background));
 }
 
-/* Glass card base style */
+/* Legacy class names now resolve to the flat "Night Library" surfaces. */
 .glass-card {
-  background: hsl(var(--card) / 0.82);
-  border: 1px solid hsl(var(--border) / 0.8);
-  border-radius: 24px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 18px;
 }
 
 /* Glass card lighter variant */
 .glass-card-light {
-  background: hsl(var(--card) / 0.62);
-  border: 1px solid hsl(var(--border) / 0.7);
-  border-radius: 16px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
 }
 
 /* Glass card subtle (for hover states) */
 .glass-card-subtle {
-  background: hsl(var(--muted) / 0.45);
-  border: 1px solid hsl(var(--border) / 0.7);
+  background: hsl(var(--muted) / 0.55);
+  border: 1px solid hsl(var(--border));
   border-radius: 12px;
-  transition: all 0.2s ease;
+  transition: background-color 180ms cubic-bezier(0.22, 1, 0.36, 1), border-color 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .glass-card-subtle:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: hsl(var(--muted));
+  border-color: hsl(var(--border));
 }
 
 /* Glassmorphism header/nav */
 .glass-header {
-  background: hsl(var(--background) / 0.82);
-  border-bottom: 1px solid hsl(var(--border) / 0.75);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: hsl(var(--background) / 0.96);
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 /* Glassmorphism footer */
 .glass-footer {
-  background: hsl(var(--background) / 0.72);
-  border-top: 1px solid hsl(var(--border) / 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: hsl(var(--card));
+  border-top: 1px solid hsl(var(--border));
 }
 
 /* Glass input */
 .glass-input {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
-  transition: all 0.2s ease;
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  transition: border-color 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .glass-input:focus {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: hsl(var(--muted));
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.18);
 }
 
 /* Glass button */
 .glass-button {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
   border-radius: 12px;
-  transition: all 0.2s ease;
+  transition: background-color 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .glass-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: hsl(var(--accent));
+  border-color: hsl(var(--border));
 }
 
 /* Glass chip/tag */
 .glass-chip {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
   border-radius: 9999px;
   padding: 4px 12px;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.5);
-  transition: all 0.2s ease;
+  color: hsl(var(--muted-foreground));
+  transition: background-color 180ms cubic-bezier(0.22, 1, 0.36, 1), color 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .glass-chip:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.7);
+  background: hsl(var(--accent));
+  border-color: hsl(var(--border));
+  color: hsl(var(--accent-foreground));
 }
 
 /* ============================================

@@ -23,7 +23,7 @@ export default function FeaturedMangaCard({
   totalSlides = 1
 }: FeaturedMangaCardProps) {
   return (
-    <div className="relative w-full h-[334px] md:h-[352px] lg:h-[370px] overflow-hidden rounded-xl bg-muted group">
+    <div className="group relative h-[360px] w-full overflow-hidden rounded-[18px] bg-muted ring-1 ring-border md:h-[390px] lg:h-[420px]">
       {/* Background Image */}
       <img
         src={getCoverImageUrl(manga.cover)}
@@ -32,13 +32,13 @@ export default function FeaturedMangaCard({
         height="420"
         loading="eager"
         fetchPriority={isFirst ? "high" : "auto"}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        className="absolute inset-0 h-full w-full object-cover"
         onError={(e) => { e.currentTarget.src = "/placeholder-cover.svg"; }}
       />
 
       {/* Cinematic Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#09090B]/90 via-[#09090B]/40 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#09090B]/60 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#151515]/95 via-[#151515]/72 to-[#151515]/10" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#151515]/75 via-transparent to-[#151515]/10" />
 
       {/* Navigation Arrows */}
       {onPrev && onNext && totalSlides > 1 && (
@@ -46,14 +46,14 @@ export default function FeaturedMangaCard({
           <button
             onClick={onPrev}
             aria-label="Truyện đề xuất trước"
-            className="absolute left-3 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white/80 opacity-80 backdrop-blur-sm transition-all duration-200 hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+            className="absolute left-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl border border-white/15 bg-[#151515]/85 text-white/80 transition-colors duration-200 hover:bg-[#272522] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={onNext}
             aria-label="Truyện đề xuất tiếp theo"
-            className="absolute right-3 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white/80 opacity-80 backdrop-blur-sm transition-all duration-200 hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+            className="absolute right-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl border border-white/15 bg-[#151515]/85 text-white/80 transition-colors duration-200 hover:bg-[#272522] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -68,7 +68,7 @@ export default function FeaturedMangaCard({
               key={i}
               aria-hidden="true"
               className={`h-1 rounded-full transition-all duration-300 ${
-                i === currentIndex ? "w-6 bg-[#EF4444]" : "w-1.5 bg-white/40"
+                i === currentIndex ? "w-6 bg-primary" : "w-1.5 bg-white/40"
               }`}
             />
           ))}
@@ -77,7 +77,7 @@ export default function FeaturedMangaCard({
 
       {/* Content */}
       <div className="absolute inset-0 flex items-end lg:items-center">
-        <div className="w-full lg:w-[60%] p-6 md:p-8 lg:p-10 animate-slide-in-left">
+        <div className="w-full p-6 md:p-9 lg:w-[62%] lg:p-12">
           {/* Rating & Meta */}
           <div className="flex items-center gap-3 mb-3">
             <div className="flex items-center gap-1">
@@ -88,18 +88,18 @@ export default function FeaturedMangaCard({
               <Eye className="h-3.5 w-3.5" />
               <span>{formatNumber(manga.views)}</span>
             </div>
-            <Badge className="bg-[#EF4444]/80 text-white border border-white/[0.15] text-[10px] font-semibold px-2.5 py-0.5 backdrop-blur-sm">
-              {manga.latestChapter ? `Ch. ${manga.latestChapter}` : "Mới"}
+            <Badge className="border-0 bg-primary px-2.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+              {manga.latestChapter ? `Chương ${manga.latestChapter}` : "Mới"}
             </Badge>
           </div>
 
           {/* Title */}
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">
+          <h2 className="mb-2 text-3xl font-semibold leading-[1.08] tracking-tight text-[#f8f5ef] md:text-4xl lg:text-5xl">
             {manga.title}
           </h2>
 
           {/* Description */}
-          <p className="text-xs md:text-sm text-white/50 mb-3 line-clamp-2 max-w-xl leading-relaxed">
+          <p className="mb-4 line-clamp-2 max-w-xl text-sm leading-relaxed text-white/65 md:text-base">
             {manga.description || "Một tác phẩm đầy cuốn hút với cốt truyện sâu sắc và hình ảnh tuyệt đẹp."}
           </p>
 
@@ -109,7 +109,7 @@ export default function FeaturedMangaCard({
               <Link key={g.id} href={`/the-loai/${g.slug}`}>
                 <Badge
                   variant="secondary"
-                  className="bg-white/10 backdrop-blur-sm text-white/70 border border-white/15 hover:bg-white/20 transition-colors text-[10px] font-medium px-2 py-0.5 cursor-pointer"
+                  className="cursor-pointer border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/75 transition-colors hover:bg-white/15"
                 >
                   {g.name}
                 </Badge>
@@ -118,8 +118,8 @@ export default function FeaturedMangaCard({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-3 animate-slide-in-up">
-            <Button asChild className="bg-[#EF4444] hover:bg-[#DC2626] text-white px-5 py-2 rounded-full font-medium text-sm transition-all duration-200 shadow-lg shadow-[#EF4444]/20 hover:shadow-[#EF4444]/30 hover:scale-105 active:scale-95">
+          <div className="flex items-center gap-3">
+            <Button asChild className="h-10 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary/90">
               <Link href={`/truyen/${manga.id}`}>
                   <Play className="h-4 w-4 mr-1.5 fill-current" />
                   Đọc ngay
@@ -127,7 +127,7 @@ export default function FeaturedMangaCard({
             </Button>
             <Button asChild
                 variant="outline"
-                className="border-white/25 text-white/80 hover:bg-white/10 hover:text-white px-5 py-2 rounded-full font-medium text-sm transition-all duration-200 hover:scale-105 active:scale-95"
+                className="h-10 rounded-xl border-white/25 bg-transparent px-5 text-sm font-semibold text-white/85 transition-colors duration-200 hover:bg-white/10 hover:text-white"
               >
               <Link href={`/truyen/${manga.id}`}>
                 <Info className="h-4 w-4 mr-1.5" />
