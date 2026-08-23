@@ -13,6 +13,11 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_PUBLIC_API_URL: /api/v1
+      NEXT_PUBLIC_AUTH_API_URL: /auth
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,11 +27,13 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
       - run: npm run lint
+      - run: npm run build
 
   build-and-push:
     needs: verify
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
@@ -45,7 +52,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=/api/v1
             NEXT_PUBLIC_AUTH_API_URL=/auth
-            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID || '695451075871-jtr8p39l8dm7inm3bgmiqb2p912fg9o3.apps.googleusercontent.com' }}
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}
           tags: |
             ghcr.io/minhtri2702/mot-frontend:latest
             ghcr.io/minhtri2702/mot-frontend:${{ github.sha }}
