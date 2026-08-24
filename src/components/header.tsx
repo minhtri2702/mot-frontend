@@ -248,7 +248,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full glass-header">
-      <div className="container flex h-[68px] items-center justify-between gap-3">
+      <div className="flex h-[68px] w-full items-center justify-between gap-3 px-3 sm:px-5 lg:px-6 2xl:px-8">
         {/* Mobile Menu Button */}
         <MobileNav />
 

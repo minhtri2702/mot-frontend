@@ -268,7 +268,7 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="container space-y-12 py-8">
+      <div className="w-full space-y-12 px-3 py-8 sm:px-5 lg:px-6 2xl:px-8">
         <section>
           <div className="mb-4 h-7 w-40 animate-pulse rounded-md bg-muted" />
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
@@ -282,7 +282,7 @@ export default function Home() {
   }
 
   return (
-    <div className="container space-y-7 py-4 md:space-y-8 md:py-6">
+    <div className="w-full space-y-7 px-3 py-4 sm:px-5 md:space-y-8 md:py-6 lg:px-6 2xl:px-8">
       {/* ===== FEATURED STAGE + COMPACT RANKING ===== */}
       {currentHero && (
         <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]" aria-label="Truyện nổi bật">
@@ -389,7 +389,7 @@ export default function Home() {
                 Xem tất cả <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 min-[2000px]:grid-cols-8 min-[2300px]:grid-cols-9 min-[2700px]:grid-cols-10 min-[3100px]:grid-cols-11 min-[3500px]:grid-cols-12">
               {trendingManga.slice(0, 35).map((manga) => (
                 <MangaCard
                   key={manga.id}
@@ -412,7 +412,7 @@ export default function Home() {
                 Xem tất cả <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
-            <div className="grid gap-x-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className="grid gap-x-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 min-[2200px]:grid-cols-5 min-[3000px]:grid-cols-6">
               {latestUpdates.slice(0, 18).map((manga) => (
                 <Link
                   key={manga.id}
@@ -464,7 +464,7 @@ export default function Home() {
                   Xem tất cả <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 min-[2000px]:grid-cols-8 min-[2300px]:grid-cols-9 min-[2700px]:grid-cols-10 min-[3100px]:grid-cols-11 min-[3500px]:grid-cols-12">
                 {trendingManga.filter(m => m.status === "Hoàn thành").slice(0, 24).map((manga) => (
                   <MangaCard
                     key={manga.id}

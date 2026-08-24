@@ -48,7 +48,7 @@ export default function FeaturedMangaCard({
         alt=""
         fill
         priority={isFirst}
-        sizes="(max-width: 1024px) 100vw, 75vw"
+        sizes="(max-width: 1024px) 100vw, calc(100vw - 22rem)"
         className={`absolute inset-0 h-full w-full scale-110 object-cover transition-opacity duration-200 ${bannerFailed ? "opacity-55 blur-xl" : "opacity-30 blur-lg"}`}
       />
 
@@ -60,7 +60,7 @@ export default function FeaturedMangaCard({
           alt={manga.title}
           fill
           priority={isFirst}
-          sizes="(max-width: 1024px) 100vw, 75vw"
+          sizes="(max-width: 1024px) 100vw, calc(100vw - 22rem)"
           className="absolute inset-0 h-full w-full object-cover"
           onError={() => setBannerFailed(true)}
         />
