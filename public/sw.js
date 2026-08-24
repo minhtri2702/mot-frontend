@@ -1,4 +1,4 @@
-const STATIC_CACHE = "mot-static-v4";
+const STATIC_CACHE = "mot-static-v5";
 const APP_SHELL = ["/", "/favicon.svg", "/pwa-icon-192.png", "/pwa-icon-512.png"];
 
 self.addEventListener("install", (event) => {
