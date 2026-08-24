@@ -1,4 +1,4 @@
-const STATIC_CACHE = "mot-static-v2";
+const STATIC_CACHE = "mot-static-v4";
 const APP_SHELL = ["/", "/favicon.svg", "/pwa-icon-192.png", "/pwa-icon-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -22,12 +22,9 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(fetch(request).catch(() => caches.match("/")));
     return;
   }
-  if (url.pathname.startsWith("/_next/static/") || url.pathname.endsWith(".svg")) {
-    event.respondWith(caches.match(request).then((cached) => cached || fetch(request).then((response) => {
-      if (response.ok) caches.open(STATIC_CACHE).then((cache) => cache.put(request, response.clone()));
-      return response;
-    })));
-  }
+  // Next.js assets are content-hashed and already cached by the browser/CDN.
+  // Intercepting them here duplicates storage and risks consuming a streamed
+  // response before it reaches the page.
 });
 
 self.addEventListener("notificationclick", (event) => {
