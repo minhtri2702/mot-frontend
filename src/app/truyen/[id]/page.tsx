@@ -105,7 +105,15 @@ export default function MangaDetailPage() {
     );
   }
 
-  const displayedChapters = showAllChapters ? manga.chapters : manga.chapters.slice(0, 5);
+  const lastReadChapterIndex = lastReadChapterId == null
+    ? -1
+    : manga.chapters.findIndex((chapter) => chapter.id === lastReadChapterId);
+  const nearbyStart = Math.max(0, Math.min(lastReadChapterIndex - 2, manga.chapters.length - 5));
+  const displayedChapters = showAllChapters
+    ? manga.chapters
+    : lastReadChapterIndex >= 0
+      ? manga.chapters.slice(nearbyStart, nearbyStart + 5)
+      : manga.chapters.slice(0, 5);
 
   return (
     <div className="container py-8">
@@ -214,7 +222,14 @@ export default function MangaDetailPage() {
 
           {/* Chapter List */}
           <section>
-            <h2 className="text-xl font-bold mb-4">Danh sách chương</h2>
+            <div className="mb-4 flex items-end justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-bold">Danh sách chương</h2>
+                {!showAllChapters && lastReadChapterIndex >= 0 && (
+                  <p className="mt-1 text-sm text-muted-foreground">Các chương gần Chương {lastReadChapterNumber} bạn đang đọc</p>
+                )}
+              </div>
+            </div>
             {manga.chapters.length > 0 ? (
               <>
                 <div className="border rounded-lg divide-y">
@@ -222,13 +237,17 @@ export default function MangaDetailPage() {
                     <Link
                       key={chapter.id}
                       href={`/truyen/${manga.id}/chuong/${chapter.id}`}
-                      className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors"
+                      aria-current={chapter.id === lastReadChapterId ? "page" : undefined}
+                      className={`flex items-center justify-between px-4 py-3 transition-colors ${chapter.id === lastReadChapterId ? "bg-primary/10" : "hover:bg-muted/50"}`}
                     >
                       <div className="flex items-center gap-3">
                         <BookOpen className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">
                           {chapter.chapterName || `Chương ${chapter.chapterNumber}`}
                         </span>
+                        {chapter.id === lastReadChapterId && (
+                          <Badge variant="secondary" className="border border-primary/30 bg-primary/10 text-primary">Đang đọc</Badge>
+                        )}
                       </div>
                       <span className="text-sm text-muted-foreground">
                         {formatRelativeTime(chapter.createdAt)}

@@ -55,28 +55,26 @@ async function urlToThumbnailBase64(imageUrl: string): Promise<string> {
 export async function saveReadingHistory(entry: ReadingHistoryEntry): Promise<void> {
   try {
     const history = getReadingHistory();
-
-    // Remove old entry for the same manga (if exists)
+    const previous = history.find((item) => item.mangaId === entry.mangaId);
     const filtered = history.filter((h) => h.mangaId !== entry.mangaId);
 
-    // Convert cover image to small base64 thumbnail
-    let coverData = entry.coverImagePath;
-    if (coverData && !coverData.startsWith("data:")) {
-      coverData = await urlToThumbnailBase64(coverData);
-    }
-
-    const cleanEntry = {
+    // Persist the chapter immediately. Thumbnail conversion may take seconds
+    // and must never delay or overwrite a newer reading position.
+    const immediateEntry = {
       ...entry,
-      coverImagePath: coverData,
+      coverImagePath: entry.coverImagePath || previous?.coverImagePath || "",
     };
+    localStorage.setItem(HISTORY_KEY, JSON.stringify([immediateEntry, ...filtered].slice(0, MAX_ITEMS)));
 
-    // Add new entry to the top
-    filtered.unshift(cleanEntry);
-
-    // Limit max items
-    const trimmed = filtered.slice(0, MAX_ITEMS);
-
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(trimmed));
+    if (entry.coverImagePath && !entry.coverImagePath.startsWith("data:")) {
+      const coverData = await urlToThumbnailBase64(entry.coverImagePath);
+      const latest = getReadingHistory();
+      const latestEntry = latest.find((item) => item.mangaId === entry.mangaId);
+      if (latestEntry?.chapterId !== entry.chapterId || latestEntry.lastReadDate !== entry.lastReadDate) return;
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(latest.map((item) =>
+        item.mangaId === entry.mangaId ? { ...item, coverImagePath: coverData } : item
+      )));
+    }
   } catch {
     // localStorage might be full or unavailable
   }

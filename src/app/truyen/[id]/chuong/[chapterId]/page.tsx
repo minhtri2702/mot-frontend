@@ -1,13 +1,15 @@
 "use client";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState, useEffect, useRef, useCallback, memo } from "react";
-import { ChevronLeft, ChevronRight, Sun, Moon, Bookmark, BookmarkCheck, Maximize, Minimize, Rows3, PanelsTopLeft, Scaling, RotateCcw, MessageSquareWarning } from "lucide-react";
+import { useState, useEffect, useRef, useCallback, memo, useMemo } from "react";
+import { ChevronLeft, ChevronRight, Sun, Moon, Bookmark, BookmarkCheck, Maximize, Minimize, Rows3, PanelsTopLeft, Scaling, RotateCcw, MessageSquareWarning, List, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ChapterReaderSkeleton } from "@/components/manga-card-skeleton";
 import { getChapterDetail, getMangaDetail, submitChapterReport } from "@/lib/api";
 import type { ChapterDetailDTO, MangaDetailDTO } from "@/lib/api";
-import { saveReadingHistory } from "@/lib/reading-history";
+import { getMangaReadingHistory, saveReadingHistory } from "@/lib/reading-history";
+import { toast } from "sonner";
 
 type ReadingMode = "scroll" | "page";
 type ReaderWidth = "compact" | "comfortable" | "full";
@@ -17,6 +19,72 @@ interface SavedReadingPosition {
   offset: number;
   scrollY: number;
   updatedAt: string;
+}
+
+function ChapterPicker({ mangaId, currentChapterId, chapters, triggerClassName }: {
+  mangaId: string;
+  currentChapterId: number;
+  chapters: MangaDetailDTO["chapters"];
+  triggerClassName?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const currentIndex = chapters.findIndex((item) => item.id === currentChapterId);
+  const visibleChapters = useMemo(() => {
+    const normalized = query.trim().toLocaleLowerCase("vi").replace(/^ch(?:ương|uong)?\s*/i, "");
+    if (normalized) {
+      return chapters.filter((item) =>
+        String(item.chapterNumber).includes(normalized) || item.chapterName?.toLocaleLowerCase("vi").includes(query.trim().toLocaleLowerCase("vi"))
+      ).slice(0, 100);
+    }
+    const start = Math.max(0, currentIndex - 40);
+    return chapters.slice(start, start + 81);
+  }, [chapters, currentIndex, query]);
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) setQuery(""); }}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className={triggerClassName} aria-label="Mở danh sách chương">
+          <List className="h-4 w-4" />
+          <span className="hidden md:inline">Danh sách chương</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="top-auto bottom-0 max-h-[82dvh] translate-y-0 gap-0 rounded-t-2xl p-0 sm:bottom-auto sm:top-1/2 sm:max-w-xl sm:-translate-y-1/2 sm:rounded-2xl">
+        <DialogHeader className="border-b border-border px-5 pb-4 pt-5 text-left">
+          <DialogTitle>Chọn chương</DialogTitle>
+          <DialogDescription>{chapters.length} chương, đang đọc chương {chapters[currentIndex]?.chapterNumber}</DialogDescription>
+        </DialogHeader>
+        <label className="relative mx-5 mt-4 block">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            autoFocus
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Tìm số hoặc tên chương..."
+            className="h-11 w-full rounded-xl border border-border bg-muted pl-10 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/25"
+          />
+        </label>
+        <div className="mt-3 max-h-[55dvh] overflow-y-auto px-3 pb-4" role="listbox" aria-label="Danh sách chương">
+          {visibleChapters.map((item) => {
+            const active = item.id === currentChapterId;
+            return (
+              <Link
+                key={item.id}
+                href={`/truyen/${mangaId}/chuong/${item.id}`}
+                aria-current={active ? "page" : undefined}
+                className={`flex min-h-11 items-center justify-between rounded-xl px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${active ? "bg-primary/15 font-semibold text-primary" : "hover:bg-muted"}`}
+              >
+                <span className="truncate">{item.chapterName || `Chương ${item.chapterNumber}`}</span>
+                {active && <span className="ml-3 shrink-0 text-xs">Đang đọc</span>}
+              </Link>
+            );
+          })}
+          {visibleChapters.length === 0 && <p className="px-3 py-10 text-center text-sm text-muted-foreground">Không tìm thấy chương phù hợp.</p>}
+          {!query && chapters.length > visibleChapters.length && <p className="px-3 pt-3 text-center text-xs text-muted-foreground">Hiển thị các chương gần chương đang đọc. Dùng tìm kiếm để nhảy xa hơn.</p>}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function withRetryToken(src: string, retryCount: number) {
@@ -60,7 +128,14 @@ function useHideOnScroll(threshold = 10) {
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    const reveal = () => setIsHidden(false);
+    window.addEventListener("pointerdown", reveal, { passive: true });
+    window.addEventListener("mousemove", reveal, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("pointerdown", reveal);
+      window.removeEventListener("mousemove", reveal);
+    };
   }, [threshold]);
 
   return { isHidden };
@@ -88,6 +163,7 @@ const ChapterImage = memo(function ChapterImage({
   const [shouldLoad, setShouldLoad] = useState(priority);
   const [failed, setFailed] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -104,7 +180,12 @@ const ChapterImage = memo(function ChapterImage({
   }, [index, onNearViewport, priority]);
 
   return (
-    <div ref={wrapperRef} data-page-index={index} className={`relative w-full ${isLoaded ? "" : "aspect-[3/4]"}`}>
+    <div
+      ref={wrapperRef}
+      data-page-index={index}
+      className="relative w-full"
+      style={{ aspectRatio: aspectRatio || (!isLoaded ? 2 / 3 : undefined) }}
+    >
       {!isLoaded && (
         <div className="absolute inset-0 animate-pulse bg-muted" aria-hidden="true" />
       )}
@@ -116,7 +197,9 @@ const ChapterImage = memo(function ChapterImage({
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : "auto"}
           decoding="async"
-          onLoad={() => {
+          onLoad={(event) => {
+            const image = event.currentTarget;
+            if (image.naturalWidth && image.naturalHeight) setAspectRatio(image.naturalWidth / image.naturalHeight);
             setIsLoaded(true);
             onLoaded(index);
           }}
@@ -248,12 +331,14 @@ export default function ChapterReaderPage() {
       if (isBookmarked) {
         localStorage.removeItem(bookmarkKey);
         setIsBookmarked(false);
+        toast("Đã bỏ đánh dấu vị trí");
       } else {
         const position = readingMode === "page"
           ? { pageIndex: currentPage, offset: 0, scrollY: 0, updatedAt: new Date().toISOString() }
           : getCurrentPosition();
         localStorage.setItem(bookmarkKey, JSON.stringify(position));
         setIsBookmarked(true);
+        toast.success("Đã đánh dấu vị trí đang đọc");
       }
     } catch {}
   }, [bookmarkKey, currentPage, getCurrentPosition, isBookmarked, readingMode]);
@@ -319,9 +404,10 @@ export default function ChapterReaderPage() {
       if (progressRAFRef.current) cancelAnimationFrame(progressRAFRef.current);
       progressRAFRef.current = requestAnimationFrame(() => {
         if (!contentRef.current) return;
-        const scrollTop = window.scrollY;
-        const scrollHeight = contentRef.current.scrollHeight - window.innerHeight;
-        const pct = scrollHeight > 0 ? Math.min(100, Math.round((scrollTop / scrollHeight) * 100)) : 0;
+        const contentTop = window.scrollY + contentRef.current.getBoundingClientRect().top;
+        const readableHeight = Math.max(1, contentRef.current.scrollHeight - window.innerHeight);
+        const distanceRead = window.scrollY - contentTop;
+        const pct = Math.min(100, Math.max(0, Math.round((distanceRead / readableHeight) * 100)));
         setProgress(pct);
         setVisiblePage(getCurrentPosition().pageIndex);
       });
@@ -347,6 +433,8 @@ export default function ChapterReaderPage() {
     if (!chapter || loading) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.isContentEditable || target?.closest("input, textarea, select, [role='dialog']")) return;
       if (readingMode === "page" && e.key === "ArrowLeft") {
         e.preventDefault();
         setCurrentPage((page) => Math.max(0, page - 1));
@@ -368,12 +456,18 @@ export default function ChapterReaderPage() {
       } else if (e.key === " " && readingMode === "scroll") {
         e.preventDefault();
         window.scrollBy({ top: window.innerHeight * 0.9, behavior: "smooth" });
+      } else if (e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        void toggleFullscreen();
+      } else if (e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        toggleBookmark();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [chapter, loading, id, readingMode]);
+  }, [chapter, loading, id, readingMode, toggleBookmark, toggleFullscreen]);
 
   useEffect(() => {
     if (!chapter) return;
@@ -447,9 +541,25 @@ export default function ChapterReaderPage() {
         setChapter(chapterData);
         setLoading(false);
 
+        const readAt = new Date().toISOString();
+        const chapterTitle = chapterData.chapterName || `Chương ${chapterData.chapterNumber}`;
+        // Save before the optional manga metadata request so Back always sees
+        // the chapter the reader just opened.
+        void saveReadingHistory({
+          mangaId: chapterData.mangaId || id,
+          mangaTitle: chapterData.mangaTitle || id,
+          coverImagePath: "",
+          stt: 0,
+          chapterId: chapterData.id,
+          chapterNumber: chapterData.chapterNumber,
+          chapterName: chapterTitle,
+          lastReadDate: readAt,
+        });
+
         void getMangaDetail(id).then((mangaData) => {
           setManga(mangaData);
-          const chapterTitle = chapterData.chapterName || `Chương ${chapterData.chapterNumber}`;
+          const latest = getMangaReadingHistory(chapterData.mangaId || id);
+          if (latest?.chapterId !== chapterData.id) return;
           return saveReadingHistory({
             mangaId: chapterData.mangaId || id,
             mangaTitle: mangaData.title || chapterData.mangaTitle || id,
@@ -458,7 +568,7 @@ export default function ChapterReaderPage() {
             chapterId: chapterData.id,
             chapterNumber: chapterData.chapterNumber,
             chapterName: chapterTitle,
-            lastReadDate: new Date().toISOString(),
+            lastReadDate: readAt,
           });
         }).catch((error) => console.error("Failed to load manga metadata:", error));
       } catch (error) {
@@ -565,18 +675,7 @@ export default function ChapterReaderPage() {
           </div>
 
           {manga?.chapters && manga.chapters.length > 0 && (
-            <select
-              value={chapter.id}
-              onChange={(event) => { window.location.href = `/truyen/${id}/chuong/${event.target.value}`; }}
-              aria-label="Chọn chương"
-              className="hidden h-10 max-w-44 rounded-xl border border-border bg-muted px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring md:block"
-            >
-              {manga.chapters.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.chapterName || `Chương ${item.chapterNumber}`}
-                </option>
-              ))}
-            </select>
+            <ChapterPicker mangaId={id} currentChapterId={chapter.id} chapters={manga.chapters} triggerClassName="h-10 shrink-0 px-3" />
           )}
 
           <div className="hidden items-center gap-1 sm:flex">
@@ -816,38 +915,24 @@ export default function ChapterReaderPage() {
         <div className={`bg-background border-t transition-transform duration-300 ${
           headerHidden ? "translate-y-full" : "translate-y-0"
         }`}>
-          <div className="container flex items-center justify-center gap-4 py-4">
-            {chapter.navigation.prevChapterId ? (
-              <Button variant="outline" asChild>
-                <Link href={`/truyen/${id}/chuong/${chapter.navigation.prevChapterId}`}>
-                  <ChevronLeft className="mr-1 h-4 w-4" />
-                  Chương trước
-                </Link>
-              </Button>
-            ) : (
-              <Button variant="outline" disabled>
-                <ChevronLeft className="mr-1 h-4 w-4" />
-                Chương trước
-              </Button>
-            )}
-            <Button variant="outline" asChild>
-              <Link href={`/truyen/${id}`}>
-                Danh sách chương
-              </Link>
-            </Button>
-            {chapter.navigation.nextChapterId ? (
-              <Button variant="outline" asChild>
-                <Link href={`/truyen/${id}/chuong/${chapter.navigation.nextChapterId}`}>
-                  Chương sau
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
-            ) : (
-              <Button variant="outline" disabled>
-                Chương sau
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
-            )}
+          <div className="container flex flex-col items-center py-6">
+            <div className="text-center">
+              <p className="text-base font-semibold text-foreground">Bạn đã đọc hết {chapterTitle}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Tiến trình đã được lưu trên thiết bị này.</p>
+            </div>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+              {chapter.navigation.prevChapterId ? (
+                <Button variant="outline" asChild>
+                  <Link href={`/truyen/${id}/chuong/${chapter.navigation.prevChapterId}`}><ChevronLeft className="mr-1 h-4 w-4" />Chương trước</Link>
+                </Button>
+              ) : <Button variant="outline" disabled><ChevronLeft className="mr-1 h-4 w-4" />Chương trước</Button>}
+              {manga?.chapters?.length ? <ChapterPicker mangaId={id} currentChapterId={chapter.id} chapters={manga.chapters} /> : (
+                <Button variant="outline" asChild><Link href={`/truyen/${id}`}>Danh sách chương</Link></Button>
+              )}
+              {chapter.navigation.nextChapterId ? (
+                <Button asChild><Link href={`/truyen/${id}/chuong/${chapter.navigation.nextChapterId}`}>Đọc chương tiếp theo<ChevronRight className="ml-1 h-4 w-4" /></Link></Button>
+              ) : <Button variant="outline" disabled>Đã là chương mới nhất</Button>}
+            </div>
           </div>
           {chapter.navigation.nextChapterId && (
             <div className="container flex justify-center pb-5">
