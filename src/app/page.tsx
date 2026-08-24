@@ -268,7 +268,7 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="w-full space-y-12 px-3 py-8 sm:px-5 lg:px-6 2xl:px-8">
+      <div className="mx-auto w-[94%] max-w-[1920px] space-y-12 py-8">
         <section>
           <div className="mb-4 h-7 w-40 animate-pulse rounded-md bg-muted" />
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
@@ -282,7 +282,7 @@ export default function Home() {
   }
 
   return (
-    <div className="w-full space-y-7 px-3 py-4 sm:px-5 md:space-y-8 md:py-6 lg:px-6 2xl:px-8">
+    <div className="mx-auto w-[94%] max-w-[1920px] space-y-7 py-4 md:space-y-8 md:py-6">
       {/* ===== FEATURED STAGE + COMPACT RANKING ===== */}
       {currentHero && (
         <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]" aria-label="Truyện nổi bật">
